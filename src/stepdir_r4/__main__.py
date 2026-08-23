@@ -1,6 +1,7 @@
 """CLI do StepDir R4.
 
 `python3 -m stepdir_r4` (sem argumentos) abre o wizard GTK de instalação.
+`configurar [--pasta ...]` abre o configurador GTK da config instalada (F4).
 Sem GUI:
   `instalar [--mesa-x 800 --mesa-y 600]`  monta ~/linuxcnc/configs/R4 (F1)
   `checar`                                pré-checagens + estado dos drivers (F3)
@@ -133,6 +134,13 @@ def main(argv: list[str] | None = None) -> int:
     p_inst.add_argument("--sem-launcher", action="store_true",
                         help="Não cria launcher/atalho no Desktop")
 
+    p_conf = sub.add_parser(
+        "configurar",
+        help="Abre o configurador gráfico da config R4 instalada (F4).",
+    )
+    p_conf.add_argument("--pasta", default=None,
+                        help="Pasta da config (padrão: ~/linuxcnc/configs/R4)")
+
     sub.add_parser(
         "checar", help="Pré-checagens do sistema + estado dos drivers."
     )
@@ -170,6 +178,18 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 1
         return wizard_main()
+
+    if args.comando == "configurar":
+        try:
+            from .gui.configurador import main as configurador_main
+        except ImportError as e:
+            print(
+                "Erro: GTK3/PyGObject não encontrado (pacotes python3-gi e "
+                f"gir1.2-gtk-3.0). Detalhe: {e}",
+                file=sys.stderr,
+            )
+            return 1
+        return configurador_main(args.pasta)
 
     comandos = {
         "instalar": _cmd_instalar,

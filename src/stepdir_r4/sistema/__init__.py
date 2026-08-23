@@ -25,6 +25,7 @@ from .drivers import (
     texto_estado,
 )
 from .execucao import ExecutarSistema, Saida, executar_real
+from .linuxcnc import abrir_linuxcnc, linuxcnc_rodando, parar_linuxcnc
 from .rede import (
     IP_HOST_PADRAO,
     IP_PLACA,
@@ -95,6 +96,9 @@ __all__ = [
     "texto_checagens",
     "TUTORIAL_LINUXCNC",
     "precisa_tutorial_linuxcnc",
+    "abrir_linuxcnc",
+    "linuxcnc_rodando",
+    "parar_linuxcnc",
     "texto_estado",
     "texto_overlap",
     "texto_verificacao",

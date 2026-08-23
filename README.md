@@ -7,7 +7,7 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 1. **Instalador** (roda uma vez): configura a rede ethernet dedicada da placa, instala os drivers realtime com backup dos originais e monta a configuração da máquina em `~/linuxcnc/configs/R4` com atalho na área de trabalho.
 2. **Configurador** (uso contínuo): edita `R4.ini`/`R4.hal` por abas (eixos, spindle, probes, entradas/saídas estilo "ports and pins" do Mach3), com Aplicar/Salvar e reinício do LinuxCNC.
 
-**Estado atual (F3 concluída)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 83 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z) **+ wizard gráfico de instalação completo** (GTK3, PT-BR): pré-checagens do sistema → rede dedicada da placa (nmcli) → drivers realtime (pkexec, com backup) → modelo → dimensões da mesa → resumo → geração da pasta R4 → verificação (ping na placa + integridade dos drivers). O configurador por abas chega na F4 (ver `specs/roadmap.md`).
+**Estado atual (F4 concluída)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 84 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z, toggle do eixo A) **+ wizard gráfico de instalação completo** (pré-checagens → rede dedicada → drivers → modelo → dimensões → verificação) **+ configurador gráfico por abas** (estilo "ports and pins": eixos X/Y/Z/A, spindle, probes, entradas/saídas; Aplicar com backup / Salvar / Cancelar; Reiniciar LinuxCNC). Falta a F5: pacote `.deb` e validação em máquina real (ver `specs/roadmap.md`).
 
 ## Requisitos
 
@@ -79,7 +79,19 @@ O passo `instalar` copia a configuração completa (nunca gera arquivos do zero)
 
 > Nota sobre a rede: `192.168.1.177` é o IP fixo da placa (não é gateway). Se o seu roteador também usa a faixa `192.168.1.x`, o instalador avisa o conflito — recomendado mudar a faixa do roteador. Um `apt upgrade` do LinuxCNC pode restaurar os drivers originais em silêncio; rode `verificar` (ou a página de drivers do wizard) para conferir e reinstalar.
 
-### Editar a configuração por código (base do futuro configurador)
+### Configurador gráfico (uso contínuo)
+
+Depois de instalada, a configuração é editada pelo configurador — sem abrir arquivo na mão:
+
+```bash
+PYTHONPATH=src python3 -m stepdir_r4 configurar          # ou --pasta /outra/pasta
+```
+
+Oito abas geradas da whitelist (Geral, Eixos X/Y/Z/A, Spindle, Probes, Entradas/Saídas estilo "ports and pins" do Mach3): campos básicos em evidência, avançados no expander "Avançado". O eixo A tem um toggle de habilitar/desabilitar (ajusta `[KINS]`/`[TRAJ]` e as ligações do joint 3 no HAL). Regras derivadas (ex.: `DEADBAND` a partir do `SCALE`) são recalculadas na hora e refletidas na tela.
+
+Botões: **Aplicar** grava a aba atual com backup prévio (**Cancelar** restaura); **Salvar** grava direto; **Reiniciar LinuxCNC** fecha a instância aberta (com aviso) e reabre com a nova configuração. Comentários dos arquivos e edições manuais são preservados — o configurador só toca as variáveis da whitelist.
+
+### Editar a configuração por código (mesma base do configurador)
 
 ```python
 from stepdir_r4.core import ConfigR4
@@ -102,16 +114,19 @@ src/stepdir_r4/
 │   ├── campos.py    #   whitelist (83 campos, 8 abas) e recursos de I/O
 │   ├── documento.py #   modelo de linhas com round-trip byte-idêntico
 │   └── instalador.py#   instalar_config()
-├── gui/             # F2: wizard GTK3 de instalação
-│   ├── instalacao.py#   lógica pura do wizard (modelos, resumo, textos)
-│   └── wizard.py    #   Gtk.Assistant (8 passos, inclui páginas de sistema)
+├── gui/             # F2/F4: interfaces GTK3
+│   ├── instalacao.py#   lógica pura do wizard (modelos, resumo, textos, markup)
+│   ├── wizard.py    #   Gtk.Assistant (8 passos, inclui páginas de sistema)
+│   ├── configurador_logica.py  # lógica pura do configurador (abas, faixas, textos)
+│   └── configurador.py         # janela de abas (Notebook) gerada da whitelist
 ├── sistema/         # F3: integração de sistema
 │   ├── checagens.py #   pré-checagens (LinuxCNC, kernel RT, GTK, versão)
 │   ├── rede.py      #   conexão StepDirR4 via nmcli (sem gateway, overlap, arping)
 │   ├── drivers.py   #   estado por hash, instalação via pkexec, teste halrun
+│   ├── linuxcnc.py  #   detectar/parar/reabrir o LinuxCNC (botão Reiniciar)
 │   ├── helper_drivers.py  # helper root mínimo (chamado por pkexec)
 │   └── *.policy     #   política polkit (instalada pelo .deb na F5)
-├── __main__.py      # CLI: python3 -m stepdir_r4 [wizard|instalar|checar|rede|drivers|verificar]
+├── __main__.py      # CLI: python3 -m stepdir_r4 [wizard|configurar|instalar|checar|rede|drivers|verificar]
 └── data/
     ├── config_r4/   # configuração pronta da Spark V2 → copiada para ~/linuxcnc/configs/R4
     └── drivers/     # drivers realtime → instalados em /usr/lib/linuxcnc/modules (com backup)
