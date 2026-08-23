@@ -1,7 +1,8 @@
-"""CLI mínima da F1: `python3 -m stepdir_r4 instalar [--mesa-x 800 --mesa-y 600]`.
+"""CLI do StepDir R4.
 
-A GUI (wizard GTK) chega na F2; este comando cobre o "um comando monta a
-pasta R4 completa" do roadmap.
+`python3 -m stepdir_r4` (sem argumentos) abre o wizard GTK de instalação (F2).
+`python3 -m stepdir_r4 instalar [--mesa-x 800 --mesa-y 600]` instala pelo
+terminal, sem GUI (F1).
 """
 
 from __future__ import annotations
@@ -17,7 +18,11 @@ def main(argv: list[str] | None = None) -> int:
         prog="stepdir_r4",
         description="Instalador/configurador da placa StepDir R4 (LinuxCNC).",
     )
-    sub = parser.add_subparsers(dest="comando", required=True)
+    sub = parser.add_subparsers(dest="comando")
+
+    sub.add_parser(
+        "wizard", help="Abre o assistente gráfico de instalação (padrão)."
+    )
 
     p_inst = sub.add_parser(
         "instalar", help="Monta ~/linuxcnc/configs/R4 a partir dos templates."
@@ -30,6 +35,19 @@ def main(argv: list[str] | None = None) -> int:
                         help="Não cria launcher/atalho no Desktop")
 
     args = parser.parse_args(argv)
+
+    if args.comando in (None, "wizard"):
+        try:
+            from .gui.wizard import main as wizard_main
+        except ImportError as e:
+            print(
+                "Erro: GTK3/PyGObject não encontrado (pacotes python3-gi e "
+                f"gir1.2-gtk-3.0). Detalhe: {e}\n"
+                "Alternativa sem GUI: python3 -m stepdir_r4 instalar",
+                file=sys.stderr,
+            )
+            return 1
+        return wizard_main()
 
     try:
         res = instalar_config(

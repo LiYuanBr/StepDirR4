@@ -7,7 +7,7 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 1. **Instalador** (roda uma vez): configura a rede ethernet dedicada da placa, instala os drivers realtime com backup dos originais e monta a configuração da máquina em `~/linuxcnc/configs/R4` com atalho na área de trabalho.
 2. **Configurador** (uso contínuo): edita `R4.ini`/`R4.hal` por abas (eixos, spindle, probes, entradas/saídas estilo "ports and pins" do Mach3), com Aplicar/Salvar e reinício do LinuxCNC.
 
-**Estado atual (F1 concluída)**: núcleo editor de configuração pronto, sem GUI — parser round-trip de `R4.ini`/`R4.hal`, whitelist de 83 campos em 8 abas, regras de derivação (DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z) e montagem da pasta R4 por linha de comando. GUI (wizard), rede e drivers chegam nas próximas fases (ver `specs/roadmap.md`).
+**Estado atual (F2 concluída)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 83 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z) **+ wizard gráfico de instalação** (GTK3, PT-BR): boas-vindas → modelo → dimensões da mesa → resumo → geração da pasta R4. Rede, drivers e o configurador por abas chegam nas próximas fases (ver `specs/roadmap.md`).
 
 ## Requisitos
 
@@ -19,14 +19,23 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 
 > ⚠️ Em desenvolvimento — a entrega final será um pacote único (`sudo apt install ./stepdir-r4.deb`). Este tutorial é atualizado a cada fase.
 
-### Tutorial (estado atual — F1, sem GUI)
+### Tutorial (estado atual — F2)
 
-O que já funciona: montar a pasta de configuração `~/linuxcnc/configs/R4` a partir dos templates embutidos da Spark V2, com as dimensões da sua mesa e launcher na área de trabalho. (Rede e drivers ainda são manuais — ver `specs-readme.md` na máquina de desenvolvimento.)
+O que já funciona: montar a pasta de configuração `~/linuxcnc/configs/R4` a partir dos templates embutidos da Spark V2, com as dimensões da sua mesa e launcher na área de trabalho — pelo assistente gráfico ou pelo terminal. (Rede e drivers ainda são manuais — ver `specs-readme.md` na máquina de desenvolvimento.)
 
 ```bash
 git clone <este repositório>
 cd StepDirR4
 
+# assistente gráfico (recomendado): escolha o modelo e as dimensões da mesa
+PYTHONPATH=src python3 -m stepdir_r4
+```
+
+O wizard guia em 5 passos: boas-vindas → modelo da CNC (Spark V2) → dimensões da mesa (padrão 800×600 mm, com atalho opcional no Desktop) → resumo → instalação. Não execute como root — o assistente recusa.
+
+Alternativa sem GUI (mesmo resultado):
+
+```bash
 # monta ~/linuxcnc/configs/R4 (mesa padrão 800x600 mm):
 PYTHONPATH=src python3 -m stepdir_r4 instalar
 
@@ -59,7 +68,10 @@ src/stepdir_r4/
 │   ├── campos.py    #   whitelist (83 campos, 8 abas) e recursos de I/O
 │   ├── documento.py #   modelo de linhas com round-trip byte-idêntico
 │   └── instalador.py#   instalar_config()
-├── __main__.py      # CLI: python3 -m stepdir_r4 instalar
+├── gui/             # F2: wizard GTK3 de instalação
+│   ├── instalacao.py#   lógica pura do wizard (modelos, resumo, textos)
+│   └── wizard.py    #   Gtk.Assistant (5 passos)
+├── __main__.py      # CLI: python3 -m stepdir_r4 [wizard|instalar]
 └── data/
     ├── config_r4/   # configuração pronta da Spark V2 → copiada para ~/linuxcnc/configs/R4
     └── drivers/     # drivers realtime → instalados em /usr/lib/linuxcnc/modules (com backup)
