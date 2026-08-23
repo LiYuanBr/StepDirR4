@@ -7,9 +7,15 @@ exibe estes textos; toda decisão fica aqui, testável sem display.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+from xml.sax.saxutils import escape
 
 from ..core.instalador import ResultadoInstalacao
+
+if TYPE_CHECKING:
+    from ..sistema import Checagem
 
 FOLGA_MAX_LIMIT = 15.0
 """MAX_LIMIT = dimensão da mesa + 15 (regra da Spark V2, ver specs)."""
@@ -104,3 +110,47 @@ def texto_erro(erro: Exception) -> str:
         "Nenhuma configuração anterior foi apagada. Corrija o problema "
         "e execute o assistente novamente."
     )
+
+
+_URL = re.compile(r"https?://[^\s,()<>]+")
+
+_COR_OK = "#1a7f37"
+_COR_FALHA = "#c62828"
+
+
+def _linkar(texto_escapado: str) -> str:
+    """Converte URLs em <a href> clicável. Recebe texto já escapado."""
+    return _URL.sub(
+        lambda m: f'<a href="{m.group(0)}">{m.group(0)}</a>', texto_escapado
+    )
+
+
+def markup_checagens(checagens: list[Checagem]) -> str:
+    """Versão Pango markup de `sistema.texto_checagens` para a GUI:
+    rótulo em negrito, símbolo colorido, detalhe menor com URLs
+    clicáveis e uma linha em branco entre os itens."""
+    blocos = []
+    for c in checagens:
+        simbolo = (
+            f'<span foreground="{_COR_OK}" weight="bold">✔</span>'
+            if c.ok
+            else f'<span foreground="{_COR_FALHA}" weight="bold">✘</span>'
+        )
+        detalhe = _linkar(escape(c.detalhe))
+        blocos.append(
+            f"{simbolo}  <b>{escape(c.rotulo)}</b>\n"
+            f"      <small>{detalhe}</small>"
+        )
+    if all(c.ok for c in checagens):
+        rodape = "<b>Tudo pronto para instalar.</b>"
+    else:
+        rodape = (
+            "Há pendências. Você pode continuar mesmo assim, mas a "
+            "instalação pode não funcionar até resolvê-las."
+        )
+    return "\n\n".join(blocos) + "\n\n" + rodape
+
+
+def markup_tutorial(texto: str) -> str:
+    """Tutorial com URLs clicáveis (Pango markup)."""
+    return _linkar(escape(texto))

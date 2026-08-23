@@ -113,7 +113,11 @@ class WizardInstalacao(Gtk.Assistant):
         self._tutorial_linuxcnc = Gtk.Expander(
             label="Como instalar o LinuxCNC (passo a passo)"
         )
-        self._tutorial_linuxcnc.add(_texto(sistema.TUTORIAL_LINUXCNC))
+        rotulo_tutorial = _texto("")
+        rotulo_tutorial.set_markup(
+            instalacao.markup_tutorial(sistema.TUTORIAL_LINUXCNC)
+        )
+        self._tutorial_linuxcnc.add(rotulo_tutorial)
         self._tutorial_linuxcnc.set_no_show_all(True)
         caixa.pack_start(self._tutorial_linuxcnc, False, False, 0)
         self._check_ignorar = Gtk.CheckButton(
@@ -320,7 +324,9 @@ class WizardInstalacao(Gtk.Assistant):
     def _preparar_checagens(self) -> None:
         checagens = sistema.pre_checagens(self._executar)
         self._checagens_ok = all(c.ok for c in checagens)
-        self._rotulo_checagens.set_text(sistema.texto_checagens(checagens))
+        self._rotulo_checagens.set_markup(
+            instalacao.markup_checagens(checagens)
+        )
         if sistema.precisa_tutorial_linuxcnc(checagens):
             self._tutorial_linuxcnc.show_all()
         else:
