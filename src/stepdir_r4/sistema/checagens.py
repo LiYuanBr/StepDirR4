@@ -102,6 +102,38 @@ def pre_checagens(executar: ExecutarSistema) -> list[Checagem]:
     return resultados
 
 
+TUTORIAL_LINUXCNC = """\
+Como instalar o LinuxCNC
+
+Opção 1 — ISO oficial (recomendada):
+  1. Baixe o ISO em https://linuxcnc.org/downloads/
+     (Debian 13 com kernel PREEMPT-RT e LinuxCNC 2.9 já prontos).
+  2. Grave o ISO em um pendrive (ex.: balenaEtcher) e instale no
+     computador que vai comandar a máquina.
+  3. Rode este instalador de novo — as pendências somem.
+
+Opção 2 — Debian 12 ou 13 já instalado:
+  1. Configure o repositório oficial do LinuxCNC:
+       wget https://www.linuxcnc.org/linuxcnc-install.sh
+       chmod +x linuxcnc-install.sh
+       sudo ./linuxcnc-install.sh
+  2. Se o script não instalar tudo: sudo apt install linuxcnc-uspace
+  3. Reinicie e escolha o kernel PREEMPT-RT no menu de boot.
+
+Atenção: Ubuntu e Pop!_OS não têm o pacote linuxcnc-uspace nem kernel
+realtime disponível — nessas distros, use a Opção 1."""
+"""Tutorial PT-BR de instalação do LinuxCNC (fontes: linuxcnc.org/downloads
+e docs oficiais; verificado em 2026-08-23)."""
+
+
+def precisa_tutorial_linuxcnc(checagens: list[Checagem]) -> bool:
+    """True se alguma pendência é resolvida instalando o LinuxCNC."""
+    return any(
+        not c.ok and c.id in ("linuxcnc", "kernel_rt", "versao_suportada")
+        for c in checagens
+    )
+
+
 def texto_checagens(checagens: list[Checagem]) -> str:
     """Relatório PT-BR das pré-checagens (uma linha por item)."""
     linhas = [

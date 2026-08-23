@@ -19,6 +19,29 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 
 > ⚠️ Em desenvolvimento — a entrega final será um pacote único (`sudo apt install ./stepdir-r4.deb`). Este tutorial é atualizado a cada fase.
 
+### Instalando o LinuxCNC (pré-requisito)
+
+O software (e o wizard, na verificação do sistema) mostra este mesmo passo a passo quando o LinuxCNC ou o kernel realtime estão faltando:
+
+**Opção 1 — ISO oficial (recomendada):**
+
+1. Baixe o ISO em <https://linuxcnc.org/downloads/> (Debian 13 com kernel PREEMPT-RT e LinuxCNC 2.9 já prontos).
+2. Grave o ISO em um pendrive (ex.: balenaEtcher) e instale no computador que vai comandar a máquina.
+3. Rode este instalador de novo.
+
+**Opção 2 — Debian 12 ou 13 já instalado:**
+
+```bash
+wget https://www.linuxcnc.org/linuxcnc-install.sh
+chmod +x linuxcnc-install.sh
+sudo ./linuxcnc-install.sh          # configura o repositório oficial
+sudo apt install linuxcnc-uspace    # se o script não instalar tudo
+```
+
+Depois reinicie e escolha o kernel PREEMPT-RT no menu de boot.
+
+> Ubuntu e Pop!_OS **não têm** o pacote `linuxcnc-uspace` nem kernel realtime disponível — nessas distros, use a Opção 1.
+
 ### Tutorial (estado atual — F3)
 
 A instalação completa já funciona pelo assistente gráfico: verificação do sistema, rede dedicada da placa, drivers e a pasta de configuração `~/linuxcnc/configs/R4` a partir dos templates embutidos da Spark V2.

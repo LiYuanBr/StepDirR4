@@ -40,6 +40,9 @@ def _cmd_instalar(args: argparse.Namespace) -> int:
 def _cmd_checar(_args: argparse.Namespace) -> int:
     checagens = sistema.pre_checagens(sistema.executar_real)
     print(sistema.texto_checagens(checagens))
+    if sistema.precisa_tutorial_linuxcnc(checagens):
+        print()
+        print(sistema.TUTORIAL_LINUXCNC)
     print()
     print("Drivers em /usr/lib/linuxcnc/modules:")
     print(sistema.texto_estado(sistema.estado_drivers()))

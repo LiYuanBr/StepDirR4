@@ -9,7 +9,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .checagens import Checagem, pre_checagens, texto_checagens
+from .checagens import (
+    TUTORIAL_LINUXCNC,
+    Checagem,
+    pre_checagens,
+    precisa_tutorial_linuxcnc,
+    texto_checagens,
+)
 from .drivers import (
     EstadoDriver,
     drivers_ok,
@@ -87,6 +93,8 @@ __all__ = [
     "pre_checagens",
     "testar_driver",
     "texto_checagens",
+    "TUTORIAL_LINUXCNC",
+    "precisa_tutorial_linuxcnc",
     "texto_estado",
     "texto_overlap",
     "texto_verificacao",
