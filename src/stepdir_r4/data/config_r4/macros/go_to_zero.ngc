@@ -1,0 +1,9 @@
+
+o<go_to_zero> sub
+
+G53 G0 Z0
+G0 X0 Y0 
+
+o<go_to_zero> endsub
+
+M2

@@ -1,0 +1,52 @@
+o<x_y_z_5> sub
+
+
+;o500 if [#5422 LE 0]
+
+G53 G0 Z0 
+
+o<g54> if [#<_coord_system> eq 540]
+G54
+o<g54> endif
+
+o<g55> if [#<_coord_system> eq 550]
+G55
+o<g55> endif
+
+o<g56> if [#<_coord_system> eq 560]
+G56
+o<g56> endif
+
+o<g57> if [#<_coord_system> eq 570]
+G57
+o<g57> endif
+
+o<g58> if [#<_coord_system> eq 580]
+G58
+o<g58> endif
+
+o<g59> if [#<_coord_system> eq 590]
+G59
+o<g59> endif
+
+o<g59_1> if [#<_coord_system> eq 591]
+G59.1
+o<g59_1> endif
+
+o<g59_2> if [#<_coord_system> eq 592]
+G59.2
+o<g59_2> endif
+
+o<g59_3> if [#<_coord_system> eq 593]
+G59.3
+o<g59_3> endif
+
+
+G0 X0 Y0
+Z10
+G1 Z5 F500
+
+
+o<x_y_z_5> endsub
+
+M2

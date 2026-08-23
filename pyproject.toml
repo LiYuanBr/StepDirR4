@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stepdir-r4"
+version = "0.1.0"
+description = "Instalador e configurador da placa LinuxCNC StepDir R4"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+stepdir_r4 = ["data/**/*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

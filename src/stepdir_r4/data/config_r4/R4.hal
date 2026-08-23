@@ -1,0 +1,279 @@
+
+loadrt [KINS]KINEMATICS
+loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS  num_dio=5 num_aio=5
+
+
+
+loadrt STEPDIR-R4 ctrl_type=V,V,V,V  base_freq=60000 
+
+loadrt  and2      names=no-estop,emergencia
+loadrt  dbounce   names=debounce.emergencia,debounce.home.axis,debounce.home.y2,debounce.lim,debounce.limit.axis,debounce.probe,debounce.cycle_start,debounce.cycle_stop
+loadrt encoder names=encoder0,encoder1,encoder2,encoder3
+loadrt pid names=pid0,pid1,pid2,pid3
+loadrt time
+
+
+addf R4.read						servo-thread  
+addf encoder.capture-position		servo-thread
+
+addf motion-command-handler			servo-thread
+addf motion-controller				servo-thread
+addf time.0							servo-thread	
+
+addf pid0.do-pid-calcs				servo-thread
+addf pid1.do-pid-calcs				servo-thread
+addf pid2.do-pid-calcs				servo-thread
+addf pid3.do-pid-calcs				servo-thread
+
+addf R4.update-freq					servo-thread
+addf R4.write						servo-thread
+addf no-estop						servo-thread
+addf emergencia						servo-thread
+	
+addf    debounce.emergencia			servo-thread
+addf    debounce.home.axis			servo-thread
+addf    debounce.lim				servo-thread
+addf    debounce.probe				servo-thread
+addf    debounce.cycle_start		servo-thread
+addf    debounce.cycle_stop			servo-thread
+addf    debounce.limit.axis			servo-thread  
+    
+setp    debounce.emergencia.delay		2
+setp    debounce.home.axis.delay		2
+setp    debounce.lim.delay				2
+setp    debounce.probe.delay			2
+setp    debounce.cycle_start.delay		2
+setp    debounce.cycle_stop.delay		2
+setp    debounce.limit.axis.delay		2
+
+#===========================/Emergencia/================================    
+
+net		emergengia-in		R4.input.1.not		emergencia.in0
+net		no-estop-out		no-estop.out		emergencia.in1
+net		emergencia-out		emergencia.out		iocontrol.0.emc-enable-in R4.enable
+
+
+net  no-estop-a      iocontrol.0.user-enable-out                 no-estop.in0 
+net  no-estop-b      R4.ready                                    no-estop.in1
+
+#===============================/HOME E FIM DE CURSO/==================================>
+
+loadrt lut5
+addf lut5.0 servo-thread
+setp lut5.0.function 0x10000
+
+
+net		all-home				R4.input.2				debounce.home.axis.in  
+net		all-home-axis									debounce.home.axis.out 
+
+net		all-limit				R4.input.2.not			debounce.limit.axis.in    
+net		all-limit-axis									debounce.limit.axis.out 
+
+
+setp lut5.0.function 0x10000
+net  all-limit-axis    lut5.0.in-4
+net  axis-limit-all    lut5.0.out
+
+
+net homing-x  joint.0.homing => lut5.0.in-0
+net homing-y  joint.1.homing => lut5.0.in-1
+net homing-z  joint.2.homing => lut5.0.in-2
+
+
+net  all-home-axis      joint.0.home-sw-in
+net  axis-limit-all     joint.0.neg-lim-sw-in
+net  axis-limit-all     joint.0.pos-lim-sw-in
+
+
+net all-home-axis      joint.1.home-sw-in
+net axis-limit-all     joint.1.neg-lim-sw-in
+net axis-limit-all     joint.1.pos-lim-sw-in
+
+
+net all-home-axis      joint.2.home-sw-in
+net axis-limit-all     joint.2.neg-lim-sw-in
+net axis-limit-all     joint.2.pos-lim-sw-in
+
+
+#===============================/PROBE/================================> 
+
+loadrt or2 names=probe.or2
+addf probe.or2 servo-thread
+
+net		probe-in0-pre 		R4.input.0				probe.or2.in1
+net		probe-in1-pre		R4.input.3.not			probe.or2.in0 
+
+net     probe-out-pre		probe.or2.out			debounce.probe.in
+net     probe-in        	debounce.probe.out		motion.probe-input
+
+
+#==============================/PWM/SPINDLE/==============================
+
+
+loadrt pwmgen       output_type=0
+loadrt timedelay    count=0
+
+addf    pwmgen.update               servo-thread
+addf    timedelay.0                 servo-thread
+
+
+setp    timedelay.0.on-delay        [SPINDLE]ON_DELAY 
+
+
+net 	spindle-cmd-rpm 	=>		pwmgen.0.value
+
+net 	spindle-on 			<= 		spindle.0.on => pwmgen.0.enable 
+net     spindle-on          =>      timedelay.0.in 
+
+
+net 	 spindle-pwm 		<= 		pwmgen.0.pwm
+setp     pwmgen.0.pwm-freq          1000.0   #1KHZ 
+setp     pwmgen.0.scale             [SPINDLE]MAX_RPM
+
+setp 	pwmgen.0.offset 	0.0
+setp 	pwmgen.0.dither-pwm true
+
+net 	spindle-cmd-rpm     <= 		spindle.0.speed-out-abs
+#net 	spindle-cmd-rpm-abs <= 		spindle.0.speed-out-abs
+net 	spindle-cmd-rps     <= 		spindle.0.speed-out-rps
+net 	spindle-cmd-rps-abs <= 		spindle.0.speed-out-rps-abs
+
+net     spindle-delay       <=      timedelay.0.out
+net 	spindle-delay       =>      spindle.0.at-speed
+
+
+net 	spindle-cw 			<= 		spindle.0.forward
+net		spindle-cw 			<=		R4.output.0 	
+
+net 	spindle-ccw 	    <= 		spindle.0.reverse
+net		spindle-ccw 		<=		R4.output.1 
+
+net     R4-pwm       pwmgen.0.high_time =>    R4.pwm.0  
+
+#=============================/Esquadro - Refrigeracao /==================================
+
+net coolant-flood	iocontrol.0.coolant-flood		R4.output.2
+
+
+#=============================/EIXOS/==================================
+# X_AXIS = 0 setup
+
+		
+	net JOINT0enable 	   <= joint.0.amp-enable-out    => R4.joint.0.enable
+	net JOINT0enable 								    => pid0.enable
+	net encoder0-count     <= R4.joint.0.enc_fb         => encoder0.raw_count
+	net JOINT0pos-fb 	   <= encoder0.position         => pid0.feedback
+	net JOINT0pos-fb 								    => joint.0.motor-pos-fb
+	net JOINT0pos-cmd 	   <= joint.0.motor-pos-cmd     => pid0.command
+	net JOINT0pid-output   <= pid0.output 	            => R4.joint.0.vel-cmd
+
+	setp pid0.Pgain                      [JOINT_0]P
+	setp pid0.Igain 	                 [JOINT_0]I
+	setp pid0.Dgain                      [JOINT_0]D
+	setp pid0.bias 		                 [JOINT_0]BIAS
+	setp pid0.FF0 	                     [JOINT_0]FF0
+	setp pid0.FF1 		                 [JOINT_0]FF1
+	setp pid0.FF2 	                     [JOINT_0]FF2
+	setp pid0.deadband                   [JOINT_0]DEADBAND
+	setp pid0.maxoutput 	             [JOINT_0]PID_MAXOUTPUT
+
+	setp R4.joint.0.pgain                [JOINT_0]PGAIN                                                             
+	setp R4.joint.0.scale 		         [JOINT_0]SCALE
+	setp R4.joint.0.maxvel 	             [JOINT_0]MAX_VELOCITY
+	setp R4.joint.0.maxaccel 	         [JOINT_0]MAX_MAXACCEL 
+	setp encoder0.position-scale	     [JOINT_0]SCALE
+
+
+# Y_AXIS = 1 setup
+
+
+
+	net JOINT1enable 	   <= joint.1.amp-enable-out    => R4.joint.1.enable
+	net JOINT1enable 								    => pid1.enable
+	net encoder1-count     <= R4.joint.1.enc_fb         => encoder1.raw_count
+	net JOINT1pos-fb 	   <= encoder1.position         => pid1.feedback
+	net JOINT1pos-fb 								    => joint.1.motor-pos-fb
+	net JOINT1pos-cmd 	   <= joint.1.motor-pos-cmd     => pid1.command
+	net JOINT1pid-output   <= pid1.output 	            => R4.joint.1.vel-cmd
+
+	setp pid1.Pgain                     [JOINT_1]P
+	setp pid1.Igain 	                [JOINT_1]I
+	setp pid1.Dgain                     [JOINT_1]D
+	setp pid1.bias 		                [JOINT_1]BIAS
+	setp pid1.FF0 	                    [JOINT_1]FF0
+	setp pid1.FF1 		                [JOINT_1]FF1
+	setp pid1.FF2 	                    [JOINT_1]FF2
+	setp pid1.deadband                  [JOINT_1]DEADBAND
+	setp pid1.maxoutput 	            [JOINT_1]PID_MAXOUTPUT
+
+	setp R4.joint.1.pgain               [JOINT_1]PGAIN                                                             
+	setp R4.joint.1.scale 		        [JOINT_1]SCALE
+	setp R4.joint.1.maxvel 	            [JOINT_1]MAX_VELOCITY
+	setp R4.joint.1.maxaccel 	        [JOINT_1]MAX_MAXACCEL 
+	setp encoder1.position-scale	    [JOINT_1]SCALE
+
+# Z_AXIS = 2 setup
+
+
+
+	net JOINT2enable 	   <= joint.2.amp-enable-out    => R4.joint.2.enable
+	net JOINT2enable 								    => pid2.enable
+	net encoder2-count     <= R4.joint.2.enc_fb         => encoder2.raw_count
+	net JOINT2pos-fb 	   <= encoder2.position         => pid2.feedback
+	net JOINT2pos-fb 								    => joint.2.motor-pos-fb
+	net JOINT2pos-cmd 	   <= joint.2.motor-pos-cmd     => pid2.command
+	net JOINT2pid-output   <= pid2.output 	            => R4.joint.2.vel-cmd
+
+	setp pid2.Pgain                     [JOINT_2]P
+	setp pid2.Igain 	                [JOINT_2]I
+	setp pid2.Dgain                     [JOINT_2]D
+	setp pid2.bias 		                [JOINT_2]BIAS
+	setp pid2.FF0 	                    [JOINT_2]FF0
+	setp pid2.FF1 		                [JOINT_2]FF1
+	setp pid2.FF2 	                    [JOINT_2]FF2
+	setp pid2.deadband                  [JOINT_2]DEADBAND
+	setp pid2.maxoutput 	            [JOINT_2]PID_MAXOUTPUT
+
+	setp R4.joint.2.pgain               [JOINT_2]PGAIN                                                             
+	setp R4.joint.2.scale 		        [JOINT_2]SCALE
+	setp R4.joint.2.maxvel 	            [JOINT_2]MAX_VELOCITY
+	setp R4.joint.2.maxaccel 	        [JOINT_2]MAX_MAXACCEL 
+	setp encoder2.position-scale	    [JOINT_2]SCALE
+    
+	
+# A_AXIS = 3 setup
+
+                                                               
+
+	net JOINT3enable 	   <= joint.3.amp-enable-out    => R4.joint.3.enable
+	net JOINT3enable 								    => pid3.enable
+	net encoder3-count     <= R4.joint.3.enc_fb         => encoder3.raw_count
+	net JOINT3pos-fb 	   <= encoder3.position         => pid3.feedback
+	net JOINT3pos-fb 								    => joint.3.motor-pos-fb
+	net JOINT3pos-cmd 	   <= joint.3.motor-pos-cmd     => pid3.command
+	net JOINT3pid-output   <= pid3.output 	            => R4.joint.3.vel-cmd
+
+	setp pid3.Pgain                     [JOINT_3]P
+	setp pid3.Igain 	                [JOINT_3]I
+	setp pid3.Dgain                     [JOINT_3]D
+	setp pid3.bias 		                [JOINT_3]BIAS
+	setp pid3.FF0 	                    [JOINT_3]FF0
+	setp pid3.FF1 		                [JOINT_3]FF1
+	setp pid3.FF2 	                    [JOINT_3]FF2
+	setp pid3.deadband                  [JOINT_3]DEADBAND
+	setp pid3.maxoutput 	            [JOINT_3]PID_MAXOUTPUT
+
+	setp R4.joint.3.pgain               [JOINT_3]PGAIN                                                             
+	setp R4.joint.3.scale 		        [JOINT_3]SCALE
+	setp R4.joint.3.maxvel 	            [JOINT_3]MAX_VELOCITY
+	setp R4.joint.3.maxaccel 	        [JOINT_3]MAX_MAXACCEL 
+	setp encoder3.position-scale	    [JOINT_3]SCALE
+
+
+#=======================================================================
+
+loadusr -W hal_manualtoolchange
+net tool-change iocontrol.0.tool-change => hal_manualtoolchange.change
+net tool-changed iocontrol.0.tool-changed <= hal_manualtoolchange.changed
+net tool-number iocontrol.0.tool-prep-number => hal_manualtoolchange.number
+net tool-prepare-loopback iocontrol.0.tool-prepare => iocontrol.0.tool-prepared

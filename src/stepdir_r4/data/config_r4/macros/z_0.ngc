@@ -1,0 +1,9 @@
+o<z_0>sub
+
+G21 G90
+
+
+G0 Z5
+G1 Z0 F500
+
+o<z_0>endsub

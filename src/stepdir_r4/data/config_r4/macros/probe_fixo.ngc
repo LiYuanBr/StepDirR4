@@ -1,0 +1,44 @@
+o<probe_fixo> sub
+
+#800= #<_ini [PROBE_FIXO] POSI_SEGURO_Z>			
+#801= #<_ini [PROBE_FIXO] POSI_PROBE_X>				   
+#802= #<_ini [PROBE_FIXO] POSI_PROBE_Y>				 
+#803= #<_ini [PROBE_FIXO] POSI_PROBE_Z>			
+
+#900=#<_coord_system>							
+
+M5										
+G49								
+G54									
+G90 G0								
+
+G53 G0 Z#800						
+G53 X#801 Y#802						
+G53 Z#803							
+
+G91									
+G38.2 Z-50  F500						
+G91
+G0 Z1
+G90	
+G38.2 Z-10  F25						
+#2000=[#5063+#5223]					
+#2001=[#2000-#2002+#2003]			
+#2002=[#2000]						
+#2003=[#2001]						 
+G91
+G0 Z1
+G90						
+
+G10 L1 P#5400 Z#2001				
+G43.1 Z#2001					
+G53 Z#803					
+
+#4999 = #5400							
+
+#700=[#900/10]							
+G#700
+
+
+o<probe_fixo> endsub
+

@@ -1,0 +1,25 @@
+
+o<probe_flutuante>sub
+
+#<proc_sonda>  = #<_ini [PROBE_FLUTUANTE] PROC_SONDA>
+#<esp_probe>   = #<_ini [PROBE_FLUTUANTE] ESPESSURA_DO_PROBE>
+
+G21
+G40		
+G49		
+G91			
+
+G38.2 Z#<proc_sonda> F100	
+G10 L20 P0 Z0				
+G4 P0.1							
+G0 Z1							
+G4 P0.5						
+G38.2 Z-2 F20
+G4 P0.1
+G10 L20 P0 Z#<esp_probe>
+G0 Z5
+
+G90
+G21
+
+o<probe_flutuante>endsub

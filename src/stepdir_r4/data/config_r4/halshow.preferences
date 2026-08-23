@@ -1,0 +1,31 @@
+# Halshow settings
+# This file is generated automatically.
+wm geometry . 700x475+493+421
+placeFrames 0.3
+set ::ratio 0.3
+set ::old_w_leftf 160
+set ::watchlist {
+    pin+eng.input.0
+    pin+eng.input.1
+    pin+eng.input.2
+    pin+eng.input.3
+    pin+eng.input.4
+    pin+eng.input.5
+    pin+eng.input.6
+    pin+emergencia.in0
+    pin+emergencia.in1
+    pin+emergencia.out
+    pin+halui.program.run
+    pin+halui.program.stop
+    pin+debounce.cycle_start.in
+    pin+debounce.cycle_start.out
+    pin+debounce.cycle_stop.in
+    pin+debounce.cycle_stop.out
+}
+set ::workmode watchhal
+set ::watchInterval 100
+set ::col1_width 100
+set ::ffmts 
+set ::ifmts 
+set ::alwaysOnTop 0
+set ::autoSaveWatchlist 1

@@ -1,0 +1,306 @@
+<!-- Probe_panel.xml for [easy]probe -->
+<!-- Author: Hausen 8 -->
+<!-- Version: 1.2 -->
+<!-- Last Edited: 24-05-27 -->
+
+
+
+<pyvcp>
+    
+ 
+<vbox>
+       
+     
+<labelframe text="Spindle Speed:">
+<font>("Helvetica",10)</font>
+
+  <vbox>
+               
+                <bar>
+                        <halpin>"spindle-speed"</halpin>
+                        <max_>24000</max_>
+                </bar>
+              
+                <hbox>
+                    <led>
+                        <halpin>"spindle-at-speed-led"</halpin> 
+                        <size>20</size> 
+                        <on_color>"green"</on_color>
+                        <off_color>"red"</off_color>
+                    </led>
+                    
+                    <label>
+                        <text>"Spindle ON"</text>
+                        <font>("Helvetica",10)</font>
+                   </label>
+                   
+                   <label>
+						<text>""</text>                 <!-- Texto do Label -->
+						<font>("Helvetica", 2) </font>  <!-- Fonte e tamanho -->
+                   </label>
+                   
+						<button>
+							<halpin>"m3-button"</halpin>
+							<text>"Ligar Spindle"</text>
+							<pady>3</pady>
+							<padx>19</padx>
+							<bd>3</bd>
+						</button>
+                </hbox>
+                
+        </vbox>
+
+        </labelframe>
+        <hbox>
+<label text="  "/>
+</hbox>
+
+
+#================================Rapid Home =========================
+
+
+<!-- rapid to home button example -->
+<!--labelframe-->
+	
+<hbox>
+  
+  <button>
+    <halpin>"rth-button"</halpin>
+     <text>"IR PARA\nHOME"</text>
+     <font>("Helvetica", 10,"bold")</font>  <!-- Aumenta o tamanho da fonte -->
+     <foreground>"black"</foreground>       <!-- Cor do texto -->
+     <background>"gray80"</background>      <!-- Cor de fundo -->
+     <justify>"center"</justify>            <!-- Centraliza o texto dentro do botão -->
+     <activebackground>"green3"</activebackground>
+     <pady>5</pady>
+     <padx>5</padx>
+     <bd>3</bd>
+  </button>
+ 
+ 
+<label>
+        <text>""</text>                 <!-- Texto do Label -->
+        <font>("Helvetica", 2) </font>  <!-- Fonte e tamanho -->
+</label>
+
+
+  <button>
+    <halpin>"go-to-zero-button"</halpin>
+     <text>"IR PARA\nX0 Y0"</text>
+     <font>("Helvetica", 10,"bold")</font>  <!-- Aumenta o tamanho da fonte -->
+     <foreground>"black"</foreground>       <!-- Cor do texto -->
+     <background>"gray80"</background>      <!-- Cor de fundo -->
+     <justify>"center"</justify>            <!-- Centraliza o texto dentro do botão -->
+     <activebackground>"green3"</activebackground>
+     <pady>5</pady>
+     <padx>5</padx>
+     <bd>3</bd>
+  </button>
+
+
+<label>
+        <text>""</text>                 <!-- Texto do Label -->
+        <font>("Helvetica", 2) </font>  <!-- Fonte e tamanho -->
+</label>
+
+
+  <button>
+    <halpin>"safe-z-button"</halpin>
+     <text>"IR PARA\nZ1"</text>
+     <font>("Helvetica", 10,"bold")</font>  <!-- Aumenta o tamanho da fonte -->
+     <foreground>"black"</foreground>       <!-- Cor do texto -->
+     <background>"gray80"</background>      <!-- Cor de fundo -->
+     <justify>"center"</justify>            <!-- Centraliza o texto dentro do botão -->
+     <activebackground>"green3"</activebackground>
+     <pady>5</pady>
+     <padx>5</padx>
+     <bd>3</bd>
+  </button>
+
+</hbox>
+
+
+<hbox>
+<label text="  "/>
+</hbox>
+
+<hbox>
+
+  <button>
+    <halpin>"x_0-button"</halpin>
+    <text>"X0"</text>
+    <pady>3</pady>
+    <padx>15</padx>
+    <bd>1</bd>
+  </button>
+  
+  <button>
+    <halpin>"y_0-button"</halpin>
+    <text>"Y0"</text>
+    <pady>3</pady>
+    <padx>15</padx>
+    <bd>1</bd>
+  </button>
+  
+  <button>
+    <halpin>"z_0-button"</halpin>
+    <text>"Z0"</text>
+    <pady>3</pady>
+    <padx>15</padx>
+    <bd>1</bd>
+  </button>
+  
+  <button>
+    <halpin>"a_0-button"</halpin>
+    <text>"A0"</text>
+    <pady>3</pady>
+    <padx>15</padx>
+    <bd>1</bd>
+  </button>
+
+</hbox>
+<!--/labelframe-->
+ 
+
+<label text="  "/>
+
+
+<labelframe text="     Plano de Trabalho:">
+<font>("Helvetica",10)</font>
+ 
+<hbox>
+	
+<!--   <button>
+    <halpin>"g53-button"</halpin>
+    <text>"G53"</text>
+    <pady>3</pady>
+    <padx>19</padx>
+    <bd>1</bd>
+  </button>		
+-->  
+  <button>
+    <halpin>"g54-button"</halpin>
+    <text>"G54"</text>
+    <pady>3</pady>
+    <padx>19</padx>
+    <bd>1</bd>
+  </button>
+  
+  <button>
+    <halpin>"g55-button"</halpin>
+    <text>"G55"</text>
+    <pady>3</pady>
+    <padx>19</padx>
+    <bd>1</bd>
+  </button>
+  
+  <button>
+    <halpin>"g56-button"</halpin>
+    <text>"G56"</text>
+    <pady>3</pady>
+    <padx>19</padx>
+    <bd>1</bd>
+  </button>
+  
+</hbox>
+
+
+</labelframe>
+
+
+
+<hbox>	 
+<label text="  "/>
+</hbox>
+
+
+#=============================== PROBE ============================
+
+</vbox>
+
+<labelframe text="Probe:">
+	<font>("Helvetica",15)</font>
+	
+       
+       
+       <image name='probe' file='probe.gif'/>
+<image name='verde' file='verde.gif'/>
+<vbox>
+    <image_bit halpin='selectimage' images='probe verde'/>
+</vbox>
+
+<button>
+ <halpin>"probe-button"</halpin>
+   <text>"Probe Flutuante"</text>
+     <pady> 8 </pady>
+      <padx> 38 </padx>
+    <activebackground>"green"</activebackground>
+   <bd>6</bd>
+</button>
+	
+<button>
+ <halpin>"probe-fixo-button"</halpin>
+   <text>"Probe Fixo"</text>
+     <pady> 8 </pady>
+      <padx> 38 </padx>
+    <activebackground>"green"</activebackground>
+   <bd>6</bd>
+</button>
+</labelframe>
+
+
+<hbox>	 
+<label text="  "/>
+</hbox>
+
+ #================Tempo de Ciclo==============
+
+<labelframe text="Time">
+<font>("Helvetica",20)</font>
+
+       
+<hbox>
+	
+<u32>
+<halpin>"time-hours"</halpin>
+<font>("Helvetica",20)</font>
+<format>"1d"</format>
+
+</u32>
+<label>
+<text>":"</text>
+<font>("Helvetica",20)</font>
+
+</label>
+<u32>
+<halpin>"time-minutes"</halpin>
+<font>("Helvetica",20)</font>
+<format>"1d"</format>
+         
+</u32>
+<label>
+<text>":"</text>
+<font>("Helvetica",20)</font>
+</label>
+
+<u32>
+<halpin>"time-seconds"</halpin>
+<font>("Helvetica",20)</font>
+<format>"1d"</format>   
+</u32>
+
+</hbox>
+
+</labelframe>
+
+
+<hbox>
+<label text="  "/>
+</hbox>
+
+    
+  
+</pyvcp>
+
+
+

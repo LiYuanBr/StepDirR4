@@ -1,0 +1,7 @@
+o<y_0>sub
+
+G21 G90
+
+G0 y0
+
+o<y_0>endsub

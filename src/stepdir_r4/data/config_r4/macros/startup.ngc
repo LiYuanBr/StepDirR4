@@ -1,0 +1,11 @@
+o<startup>sub
+
+M61 Q1		
+G17					
+G21					
+G40					
+G80					
+G64 P0.01		
+
+
+o<startup>endsub

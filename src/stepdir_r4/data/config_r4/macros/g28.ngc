@@ -1,0 +1,9 @@
+
+o<g28>sub
+
+G64 P0.01			
+G0 G90 G53 Z0		
+G0 G53 X0 Y0		
+
+
+o<g28>endsub

@@ -1,0 +1,7 @@
+o<x_0>sub
+
+G21 G90
+
+G0 X0
+
+o<x_0>endsub

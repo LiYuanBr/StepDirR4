@@ -1,0 +1,26 @@
+# Include your custom_postgui HAL commands here
+# This file will not be overwritten when you run stepconf again
+
+net spindle-delay       pyvcp.spindle-at-speed-led
+net spindle-cmd-rpm     pyvcp.spindle-speed
+net probe-in            pyvcp.selectimage
+
+net rapid_home_botao    halui.mdi-command-00     pyvcp.rth-button
+net go_to_zero          halui.mdi-command-01     pyvcp.go-to-zero-button
+net safe_z              halui.mdi-command-02     pyvcp.safe-z-button
+net x_0                 halui.mdi-command-03     pyvcp.x_0-button
+net y_0                 halui.mdi-command-04     pyvcp.y_0-button
+net z_0                 halui.mdi-command-05     pyvcp.z_0-button
+net g_54                halui.mdi-command-06     pyvcp.g54-button
+net g_55                halui.mdi-command-07     pyvcp.g55-button
+net g_56                halui.mdi-command-08     pyvcp.g56-button
+net probe_botao         halui.mdi-command-09     pyvcp.probe-button
+net a_0                 halui.mdi-command-10     pyvcp.a_0-button
+net probe-fixo          halui.mdi-command-11     pyvcp.probe-fixo-button
+net m3                  halui.mdi-command-12     pyvcp.m3-button
+
+net hora                time.0.hours             pyvcp.time-hours
+net minuto              time.0.minutes           pyvcp.time-minutes
+net segundos            time.0.seconds           pyvcp.time-seconds
+net is-running          halui.program.is-running time.0.start
+net is-paused           halui.program.is-paused  time.0.pause
