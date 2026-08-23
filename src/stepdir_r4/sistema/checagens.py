@@ -62,7 +62,7 @@ def pre_checagens(executar: ExecutarSistema) -> list[Checagem]:
         "LinuxCNC instalado (linuxcnc-uspace)",
         versao is not None,
         f"versão {versao}" if versao else
-        "pacote linuxcnc-uspace não encontrado",
+        "não encontrado — instale com: sudo apt install linuxcnc-uspace",
     ))
 
     uname = executar(["uname", "-v"])
@@ -73,7 +73,9 @@ def pre_checagens(executar: ExecutarSistema) -> list[Checagem]:
         "kernel_rt",
         "Kernel de tempo real (PREEMPT-RT)",
         rt,
-        uname.stdout.strip() if uname.ok else uname.stderr.strip(),
+        uname.stdout.strip() if rt else
+        "instale com: sudo apt install linux-image-rt-amd64 e reinicie "
+        "pelo kernel RT",
     ))
 
     gtk = _tem_gtk()
