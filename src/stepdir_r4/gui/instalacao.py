@@ -47,8 +47,14 @@ def texto_curso(mesa_x: float, mesa_y: float) -> str:
     )
 
 
-def texto_resumo(params: ParametrosWizard) -> str:
-    """Texto da página de confirmação, antes de gravar qualquer coisa."""
+def texto_resumo(
+    params: ParametrosWizard, linhas_sistema: tuple[str, ...] = ()
+) -> str:
+    """Texto da página de confirmação, antes de gravar qualquer coisa.
+
+    `linhas_sistema` (F3): situação de rede/drivers decidida nas páginas
+    de sistema, mostrada junto do resumo da config.
+    """
     linhas = [
         f"Modelo da CNC: {rotulo_modelo(params.modelo)}",
         f"Dimensões da mesa: X = {params.mesa_x:g} mm, Y = {params.mesa_y:g} mm",
@@ -56,6 +62,7 @@ def texto_resumo(params: ParametrosWizard) -> str:
         f"Pasta da configuração: ~/linuxcnc/configs/R4",
         "Atalho na Área de Trabalho: "
         + ("sim" if params.criar_launcher else "não"),
+        *linhas_sistema,
         "",
         "Se já existir uma configuração R4, ela vira um backup datado — "
         "nada é perdido.",
@@ -63,8 +70,13 @@ def texto_resumo(params: ParametrosWizard) -> str:
     return "\n".join(linhas)
 
 
-def texto_resultado(res: ResultadoInstalacao) -> str:
-    """Texto da página final quando a instalação deu certo."""
+def texto_resultado(
+    res: ResultadoInstalacao, verificacao: str | None = None
+) -> str:
+    """Texto da página final quando a instalação deu certo.
+
+    `verificacao` (F3): relatório do ping na placa + hash dos drivers.
+    """
     linhas = [f"Configuração criada em {res.pasta_config}"]
     if res.backup_anterior:
         linhas.append(
@@ -72,6 +84,9 @@ def texto_resultado(res: ResultadoInstalacao) -> str:
         )
     if res.launcher:
         linhas.append(f"Atalho criado: {res.launcher}")
+    if verificacao:
+        linhas.append("")
+        linhas.append(verificacao)
     linhas.append("")
     linhas.append(
         "Abra o LinuxCNC pelo atalho “launch R4” para usar a nova "

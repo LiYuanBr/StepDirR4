@@ -1,8 +1,12 @@
 """CLI do StepDir R4.
 
-`python3 -m stepdir_r4` (sem argumentos) abre o wizard GTK de instalação (F2).
-`python3 -m stepdir_r4 instalar [--mesa-x 800 --mesa-y 600]` instala pelo
-terminal, sem GUI (F1).
+`python3 -m stepdir_r4` (sem argumentos) abre o wizard GTK de instalação.
+Sem GUI:
+  `instalar [--mesa-x 800 --mesa-y 600]`  monta ~/linuxcnc/configs/R4 (F1)
+  `checar`                                pré-checagens + estado dos drivers (F3)
+  `rede [--dispositivo eth0] [--ip ...]`  cria a conexão StepDirR4 via nmcli (F3)
+  `drivers`                               instala os .so via pkexec (F3)
+  `verificar [--com-halrun]`              ping na placa + hash dos drivers (F3)
 """
 
 from __future__ import annotations
@@ -10,7 +14,99 @@ from __future__ import annotations
 import argparse
 import sys
 
+from . import sistema
 from .core import ErroConfigR4, instalar_config
+
+
+def _cmd_instalar(args: argparse.Namespace) -> int:
+    try:
+        res = instalar_config(
+            mesa_x=args.mesa_x,
+            mesa_y=args.mesa_y,
+            criar_launcher=not args.sem_launcher,
+        )
+    except ErroConfigR4 as e:
+        print(f"Erro: {e}", file=sys.stderr)
+        return 1
+
+    print(f"Configuração criada em {res.pasta_config}")
+    if res.backup_anterior:
+        print(f"Configuração anterior preservada em {res.backup_anterior}")
+    if res.launcher:
+        print(f"Launcher criado: {res.launcher}")
+    return 0
+
+
+def _cmd_checar(_args: argparse.Namespace) -> int:
+    checagens = sistema.pre_checagens(sistema.executar_real)
+    print(sistema.texto_checagens(checagens))
+    print()
+    print("Drivers em /usr/lib/linuxcnc/modules:")
+    print(sistema.texto_estado(sistema.estado_drivers()))
+    return 0 if all(c.ok for c in checagens) else 1
+
+
+def _cmd_rede(args: argparse.Namespace) -> int:
+    executar = sistema.executar_real
+    dispositivo = args.dispositivo
+    if not dispositivo:
+        dispositivos = sistema.listar_ethernet(executar)
+        if len(dispositivos) == 1:
+            dispositivo = dispositivos[0][0]
+        else:
+            nomes = ", ".join(d for d, _ in dispositivos) or "nenhum encontrado"
+            print(
+                f"Escolha a porta com --dispositivo (ethernet: {nomes})",
+                file=sys.stderr,
+            )
+            return 1
+
+    conflitos = sistema.detectar_overlap(executar, dispositivo)
+    if conflitos:
+        print(sistema.texto_overlap(conflitos), file=sys.stderr)
+
+    if sistema.ip_em_uso(executar, dispositivo, args.ip) == "em_uso":
+        print(
+            f"Erro: o IP {args.ip} já está em uso no link da placa (arping). "
+            "Escolha outro com --ip.",
+            file=sys.stderr,
+        )
+        return 1
+
+    resultado = sistema.criar_conexao(executar, dispositivo, args.ip)
+    print(resultado.detalhe, file=None if resultado.ok else sys.stderr)
+    return 0 if resultado.ok else 1
+
+
+def _cmd_drivers(_args: argparse.Namespace) -> int:
+    saida = sistema.instalar_drivers(sistema.executar_real)
+    if saida.ok:
+        print(saida.stdout.strip())
+        return 0
+    if saida.codigo in (126, 127):
+        print("Instalação cancelada (senha não confirmada).", file=sys.stderr)
+    else:
+        print(f"Falha ao instalar os drivers:\n{saida.stderr.strip()}",
+              file=sys.stderr)
+    return 1
+
+
+def _cmd_verificar(args: argparse.Namespace) -> int:
+    v = sistema.verificar(sistema.executar_real)
+    print(sistema.texto_verificacao(v))
+    ok = v.ping_ok and sistema.drivers_ok(v.drivers)
+    if args.com_halrun:
+        print()
+        teste = sistema.testar_driver(sistema.executar_real)
+        if teste.ok:
+            print("✓ halrun carregou o STEPDIR-R4 (driver compatível).")
+        else:
+            print(
+                "✗ halrun não carregou o STEPDIR-R4 (LinuxCNC aberto? "
+                f"versão incompatível?):\n{teste.stderr.strip()}"
+            )
+            ok = False
+    return 0 if ok else 1
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -34,6 +130,29 @@ def main(argv: list[str] | None = None) -> int:
     p_inst.add_argument("--sem-launcher", action="store_true",
                         help="Não cria launcher/atalho no Desktop")
 
+    sub.add_parser(
+        "checar", help="Pré-checagens do sistema + estado dos drivers."
+    )
+
+    p_rede = sub.add_parser(
+        "rede", help="Cria a conexão de rede dedicada StepDirR4 (nmcli)."
+    )
+    p_rede.add_argument("--dispositivo", default=None,
+                        help="Porta ethernet do cabo da placa (auto se só houver uma)")
+    p_rede.add_argument("--ip", default=sistema.IP_HOST_PADRAO,
+                        help=f"IP deste PC no link (padrão: {sistema.IP_HOST_PADRAO})")
+
+    sub.add_parser(
+        "drivers",
+        help="Instala os drivers .so em /usr/lib/linuxcnc/modules (pkexec).",
+    )
+
+    p_verif = sub.add_parser(
+        "verificar", help="Ping na placa + hash dos drivers instalados."
+    )
+    p_verif.add_argument("--com-halrun", action="store_true",
+                         help="Também testa carregar o STEPDIR-R4 no halrun")
+
     args = parser.parse_args(argv)
 
     if args.comando in (None, "wizard"):
@@ -49,22 +168,14 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         return wizard_main()
 
-    try:
-        res = instalar_config(
-            mesa_x=args.mesa_x,
-            mesa_y=args.mesa_y,
-            criar_launcher=not args.sem_launcher,
-        )
-    except ErroConfigR4 as e:
-        print(f"Erro: {e}", file=sys.stderr)
-        return 1
-
-    print(f"Configuração criada em {res.pasta_config}")
-    if res.backup_anterior:
-        print(f"Configuração anterior preservada em {res.backup_anterior}")
-    if res.launcher:
-        print(f"Launcher criado: {res.launcher}")
-    return 0
+    comandos = {
+        "instalar": _cmd_instalar,
+        "checar": _cmd_checar,
+        "rede": _cmd_rede,
+        "drivers": _cmd_drivers,
+        "verificar": _cmd_verificar,
+    }
+    return comandos[args.comando](args)
 
 
 if __name__ == "__main__":

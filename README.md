@@ -7,7 +7,7 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 1. **Instalador** (roda uma vez): configura a rede ethernet dedicada da placa, instala os drivers realtime com backup dos originais e monta a configuração da máquina em `~/linuxcnc/configs/R4` com atalho na área de trabalho.
 2. **Configurador** (uso contínuo): edita `R4.ini`/`R4.hal` por abas (eixos, spindle, probes, entradas/saídas estilo "ports and pins" do Mach3), com Aplicar/Salvar e reinício do LinuxCNC.
 
-**Estado atual (F2 concluída)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 83 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z) **+ wizard gráfico de instalação** (GTK3, PT-BR): boas-vindas → modelo → dimensões da mesa → resumo → geração da pasta R4. Rede, drivers e o configurador por abas chegam nas próximas fases (ver `specs/roadmap.md`).
+**Estado atual (F3 concluída)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 83 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z) **+ wizard gráfico de instalação completo** (GTK3, PT-BR): pré-checagens do sistema → rede dedicada da placa (nmcli) → drivers realtime (pkexec, com backup) → modelo → dimensões da mesa → resumo → geração da pasta R4 → verificação (ping na placa + integridade dos drivers). O configurador por abas chega na F4 (ver `specs/roadmap.md`).
 
 ## Requisitos
 
@@ -19,31 +19,42 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 
 > ⚠️ Em desenvolvimento — a entrega final será um pacote único (`sudo apt install ./stepdir-r4.deb`). Este tutorial é atualizado a cada fase.
 
-### Tutorial (estado atual — F2)
+### Tutorial (estado atual — F3)
 
-O que já funciona: montar a pasta de configuração `~/linuxcnc/configs/R4` a partir dos templates embutidos da Spark V2, com as dimensões da sua mesa e launcher na área de trabalho — pelo assistente gráfico ou pelo terminal. (Rede e drivers ainda são manuais — ver `specs-readme.md` na máquina de desenvolvimento.)
+A instalação completa já funciona pelo assistente gráfico: verificação do sistema, rede dedicada da placa, drivers e a pasta de configuração `~/linuxcnc/configs/R4` a partir dos templates embutidos da Spark V2.
 
 ```bash
 git clone <este repositório>
 cd StepDirR4
 
-# assistente gráfico (recomendado): escolha o modelo e as dimensões da mesa
+# assistente gráfico (recomendado)
 PYTHONPATH=src python3 -m stepdir_r4
 ```
 
-O wizard guia em 5 passos: boas-vindas → modelo da CNC (Spark V2) → dimensões da mesa (padrão 800×600 mm, com atalho opcional no Desktop) → resumo → instalação. Não execute como root — o assistente recusa.
+O wizard guia em 8 passos: boas-vindas → **verificação do sistema** (LinuxCNC, kernel PREEMPT-RT, GTK) → **rede da placa** (cria a conexão `StepDirR4` na porta ethernet do cabo, IP do PC `192.168.1.10/24` sem gateway — a internet do PC não é afetada; IP editável em "Avançado") → **drivers** (instala `encoder.so`, `pwmgen.so` e `STEPDIR-R4.so` em `/usr/lib/linuxcnc/modules` com backup datado; pede a senha de administrador) → modelo da CNC (Spark V2) → dimensões da mesa (padrão 800×600 mm, atalho opcional no Desktop) → resumo → instalação + **verificação final** (ping na placa em `192.168.1.177` e integridade dos drivers). As etapas de rede e drivers podem ser puladas e feitas depois. Não execute como root — o assistente recusa.
 
-Alternativa sem GUI (mesmo resultado):
+Alternativa sem GUI (mesmos passos, pelo terminal):
 
 ```bash
-# monta ~/linuxcnc/configs/R4 (mesa padrão 800x600 mm):
-PYTHONPATH=src python3 -m stepdir_r4 instalar
+# pré-checagens do sistema + estado dos drivers:
+PYTHONPATH=src python3 -m stepdir_r4 checar
 
-# mesa com outras dimensões:
-PYTHONPATH=src python3 -m stepdir_r4 instalar --mesa-x 1000 --mesa-y 700
+# rede dedicada da placa (porta detectada automaticamente se houver só uma):
+PYTHONPATH=src python3 -m stepdir_r4 rede            # ou --dispositivo enp3s0 --ip 192.168.1.10
+
+# drivers (pede a senha via pkexec, faz backup datado dos originais):
+PYTHONPATH=src python3 -m stepdir_r4 drivers
+
+# pasta de configuração (mesa padrão 800x600 mm):
+PYTHONPATH=src python3 -m stepdir_r4 instalar        # ou --mesa-x 1000 --mesa-y 700
+
+# verificação final (ping na placa + hash dos drivers; --com-halrun testa o loadrt):
+PYTHONPATH=src python3 -m stepdir_r4 verificar
 ```
 
-O comando copia a configuração completa (nunca gera arquivos do zero), aplica `MAX_LIMIT = mesa + 15` nos eixos X/Y, resolve a pasta de programas (`PROGRAM_PREFIX`) via `xdg-user-dir` e cria `launch R4.desktop` + atalho da pasta no Desktop. Se já existir uma pasta `R4`, ela vira backup datado (`R4.bak-<data>`), nunca é perdida.
+O passo `instalar` copia a configuração completa (nunca gera arquivos do zero), aplica `MAX_LIMIT = mesa + 15` nos eixos X/Y, resolve a pasta de programas (`PROGRAM_PREFIX`) via `xdg-user-dir` e cria `launch R4.desktop` + atalho da pasta no Desktop. Se já existir uma pasta `R4`, ela vira backup datado (`R4.bak-<data>`), nunca é perdida.
+
+> Nota sobre a rede: `192.168.1.177` é o IP fixo da placa (não é gateway). Se o seu roteador também usa a faixa `192.168.1.x`, o instalador avisa o conflito — recomendado mudar a faixa do roteador. Um `apt upgrade` do LinuxCNC pode restaurar os drivers originais em silêncio; rode `verificar` (ou a página de drivers do wizard) para conferir e reinstalar.
 
 ### Editar a configuração por código (base do futuro configurador)
 
@@ -70,8 +81,14 @@ src/stepdir_r4/
 │   └── instalador.py#   instalar_config()
 ├── gui/             # F2: wizard GTK3 de instalação
 │   ├── instalacao.py#   lógica pura do wizard (modelos, resumo, textos)
-│   └── wizard.py    #   Gtk.Assistant (5 passos)
-├── __main__.py      # CLI: python3 -m stepdir_r4 [wizard|instalar]
+│   └── wizard.py    #   Gtk.Assistant (8 passos, inclui páginas de sistema)
+├── sistema/         # F3: integração de sistema
+│   ├── checagens.py #   pré-checagens (LinuxCNC, kernel RT, GTK, versão)
+│   ├── rede.py      #   conexão StepDirR4 via nmcli (sem gateway, overlap, arping)
+│   ├── drivers.py   #   estado por hash, instalação via pkexec, teste halrun
+│   ├── helper_drivers.py  # helper root mínimo (chamado por pkexec)
+│   └── *.policy     #   política polkit (instalada pelo .deb na F5)
+├── __main__.py      # CLI: python3 -m stepdir_r4 [wizard|instalar|checar|rede|drivers|verificar]
 └── data/
     ├── config_r4/   # configuração pronta da Spark V2 → copiada para ~/linuxcnc/configs/R4
     └── drivers/     # drivers realtime → instalados em /usr/lib/linuxcnc/modules (com backup)
