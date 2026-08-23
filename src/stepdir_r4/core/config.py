@@ -24,6 +24,8 @@ from .campos import (
     ARQUIVO_HAL,
     ARQUIVO_INI,
     CAMPOS,
+    EIXO_A_HAL_PADROES,
+    EIXO_A_INI,
     RECURSOS,
     AbaSpec,
     Campo,
@@ -265,6 +267,14 @@ class ConfigR4:
         [TRAJ]); nesse caso definir o valor exibido NÃO é no-op — a gravação
         precisa acontecer para sincronizar os espelhos."""
         spec = CAMPOS[cid]
+        if spec.papel == "eixo_a":
+            # sincronizado se o HAL acompanha o estado do INI (JOINTS)
+            hal = self._docs[ARQUIVO_HAL]
+            habilitado = bool(self._efetivo_no_disco(cid))
+            return all(
+                hal.hal_comentada(hal.hal_indice(p)) == (not habilitado)
+                for p in EIXO_A_HAL_PADROES
+            )
         if spec.recurso is not None:
             hal = self._docs[ARQUIVO_HAL]
             rec = RECURSOS[spec.recurso]
@@ -288,6 +298,9 @@ class ConfigR4:
         spec = CAMPOS[cid]
         if spec.recurso is not None:
             return self._ler_hal(spec)
+        if spec.papel == "eixo_a":
+            joints = self._docs[ARQUIVO_INI].ini_ler("KINS", "JOINTS")
+            return int(float(joints)) == 4
         ini = self._docs[ARQUIVO_INI]
         bruto = ini.ini_ler(spec.alvos[0].secao, spec.alvos[0].chave)
         if spec.papel == "sinal":
@@ -377,6 +390,19 @@ class ConfigR4:
         """Escreve o valor efetivo de `cid` nos documentos. Retorna arquivos tocados."""
         spec = CAMPOS[cid]
         valor = self._efetivo(cid)
+        if spec.papel == "eixo_a":
+            habilitado = bool(valor)
+            ini = docs[ARQUIVO_INI]
+            for secao, chave, com_a, sem_a in EIXO_A_INI:
+                ini.ini_escrever(secao, chave, com_a if habilitado else sem_a)
+            hal = docs[ARQUIVO_HAL]
+            for padrao in EIXO_A_HAL_PADROES:
+                i = hal.hal_indice(padrao)
+                if habilitado:
+                    hal.hal_descomentar(i)
+                else:
+                    hal.hal_comentar(i)
+            return {ARQUIVO_INI, ARQUIVO_HAL}
         if spec.recurso is not None:
             self._materializar_hal(docs[ARQUIVO_HAL], spec, valor)
             return {ARQUIVO_HAL}

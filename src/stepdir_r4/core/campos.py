@@ -139,6 +139,29 @@ _ROTULO_RECURSO = {
 _RECURSOS_AVANCADOS = {"home_limites"}
 
 
+# ---- eixo A opcional (F4) -------------------------------------------------
+# O toggle mexe em dois arquivos de uma vez (por isso não usa alvos/recurso):
+#   R4.ini — [KINS]JOINTS 4↔3, [KINS]KINEMATICS coordinates XYZA↔XYZ,
+#            [TRAJ]COORDINATES "X Y Z A"↔"X Y Z";
+#   R4.hal — comenta/descomenta as linhas que usam pinos joint.3.* (só elas
+#            quebram o load quando JOINTS=3; pid3/encoder3/R4.joint.3 existem
+#            sempre). Validação halrun/máquina real pendente (junto da F5).
+
+EIXO_A_INI: tuple[tuple[str, str, str, str], ...] = (
+    # (secao, chave, valor com eixo A, valor sem eixo A)
+    ("KINS", "JOINTS", "4", "3"),
+    ("KINS", "KINEMATICS",
+     "trivkins coordinates=XYZA", "trivkins coordinates=XYZ"),
+    ("TRAJ", "COORDINATES", "X Y Z A", "X Y Z"),
+)
+
+EIXO_A_HAL_PADROES: tuple[str, ...] = (
+    r"net\s+JOINT3enable\s+<=",
+    r"net\s+JOINT3pos-fb\s+=>",
+    r"net\s+JOINT3pos-cmd",
+)
+
+
 def _campos_eixo(eixo: str, axis: str, joint: str, angular: bool) -> list[Campo]:
     u_pos = "graus" if angular else "mm"
     u_vel = "graus/s" if angular else "mm/s"
@@ -268,6 +291,13 @@ def _montar() -> dict[str, Campo]:
     campos += _campos_eixo("eixo_x", "AXIS_X", "JOINT_0", angular=False)
     campos += _campos_eixo("eixo_y", "AXIS_Y", "JOINT_1", angular=False)
     campos += _campos_eixo("eixo_z", "AXIS_Z", "JOINT_2", angular=False)
+    campos.append(
+        Campo("eixo_a.habilitado", "Eixo A habilitado", "eixo_a",
+              Classe.BASICA, Tipo.BOOL, papel="eixo_a",
+              descricao="4º eixo (rotativo) é opcional. Desabilitar ajusta a "
+                        "cinemática ([KINS]/[TRAJ]) e comenta as ligações do "
+                        "joint 3 no HAL.")
+    )
     campos += _campos_eixo("eixo_a", "AXIS_A", "JOINT_3", angular=True)
     campos += _campos_io()
     resultado = {c.id: c for c in campos}
