@@ -62,8 +62,9 @@ def pre_checagens(executar: ExecutarSistema) -> list[Checagem]:
         "LinuxCNC instalado (linuxcnc-uspace)",
         versao is not None,
         f"versão {versao}" if versao else
-        "não encontrado — no Debian 12/13 (ISO oficial do LinuxCNC): "
-        "sudo apt install linuxcnc-uspace",
+        "não encontrado — no Debian 12/13: sudo apt install linuxcnc-uspace; "
+        "em outras distros (Ubuntu/Pop!_OS não têm o pacote) use o ISO "
+        "oficial: https://linuxcnc.org/downloads/",
     ))
 
     uname = executar(["uname", "-v"])
@@ -76,7 +77,8 @@ def pre_checagens(executar: ExecutarSistema) -> list[Checagem]:
         rt,
         uname.stdout.strip() if rt else
         "no Debian: sudo apt install linuxcnc-uspace e reinicie pelo "
-        "kernel RT (o pacote traz o kernel PREEMPT-RT junto)",
+        "kernel RT (o pacote traz o kernel PREEMPT-RT junto); em outras "
+        "distros use o ISO oficial: https://linuxcnc.org/downloads/",
     ))
 
     gtk = _tem_gtk()
