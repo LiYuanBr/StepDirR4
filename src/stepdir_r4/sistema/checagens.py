@@ -74,8 +74,8 @@ def pre_checagens(executar: ExecutarSistema) -> list[Checagem]:
         "Kernel de tempo real (PREEMPT-RT)",
         rt,
         uname.stdout.strip() if rt else
-        "instale com: sudo apt install linux-image-rt-amd64 e reinicie "
-        "pelo kernel RT",
+        "instale com: sudo apt install linuxcnc-uspace e reinicie "
+        "pelo kernel RT (o pacote traz o kernel PREEMPT-RT junto)",
     ))
 
     gtk = _tem_gtk()
