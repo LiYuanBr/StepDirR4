@@ -62,7 +62,8 @@ def pre_checagens(executar: ExecutarSistema) -> list[Checagem]:
         "LinuxCNC instalado (linuxcnc-uspace)",
         versao is not None,
         f"versão {versao}" if versao else
-        "não encontrado — instale com: sudo apt install linuxcnc-uspace",
+        "não encontrado — no Debian 12/13 (ISO oficial do LinuxCNC): "
+        "sudo apt install linuxcnc-uspace",
     ))
 
     uname = executar(["uname", "-v"])
@@ -74,8 +75,8 @@ def pre_checagens(executar: ExecutarSistema) -> list[Checagem]:
         "Kernel de tempo real (PREEMPT-RT)",
         rt,
         uname.stdout.strip() if rt else
-        "instale com: sudo apt install linuxcnc-uspace e reinicie "
-        "pelo kernel RT (o pacote traz o kernel PREEMPT-RT junto)",
+        "no Debian: sudo apt install linuxcnc-uspace e reinicie pelo "
+        "kernel RT (o pacote traz o kernel PREEMPT-RT junto)",
     ))
 
     gtk = _tem_gtk()
