@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import math
 import os
+import re
 import shutil
 import tempfile
 from datetime import datetime
@@ -36,11 +37,26 @@ from .documento import Documento
 from .erros import (
     ArquivoAlteradoExternamente,
     CampoDesconhecido,
+    ConfigCorrompida,
     ConfigNaoEncontrada,
     ValorInvalido,
 )
 
 _ARQUIVOS = (ARQUIVO_INI, ARQUIVO_HAL)
+
+
+def _numero(bruto: str, secao: str, chave: str) -> float:
+    """float do valor INI, tolerando comentário inline manual
+    ('815.0  # ajustei'). Irreconhecível → ConfigCorrompida (PT-BR),
+    nunca ValueError cru."""
+    try:
+        return float(bruto)
+    except ValueError:
+        sem_comentario = re.split(r"[#;]", bruto, maxsplit=1)[0].strip()
+        try:
+            return float(sem_comentario)
+        except ValueError:
+            raise ConfigCorrompida(f"[{secao}] {chave}", ARQUIVO_INI) from None
 
 
 def _fmt(valor: float | int) -> str:
@@ -63,6 +79,7 @@ class ConfigR4:
                     f"Configuração R4 não encontrada: falta {self.pasta / nome}"
                 )
         self._docs: dict[str, Documento] = {}
+        self._codificacoes: dict[str, str] = {}
         self._hashes: dict[str, str] = {}
         self._pendentes: dict[str, Valor] = {}
         self._fixados: set[str] = set()          # sobrescritas de derivação na sessão
@@ -175,7 +192,14 @@ class ConfigR4:
     def _carregar(self) -> None:
         for nome in _ARQUIVOS:
             dados = (self.pasta / nome).read_bytes()
-            self._docs[nome] = Documento(dados.decode("utf-8"), nome)
+            try:
+                texto, codificacao = dados.decode("utf-8"), "utf-8"
+            except UnicodeDecodeError:
+                # arquivo regravado por editor legado (ex. ISO-8859-1);
+                # latin-1 decodifica qualquer byte e regrava idêntico
+                texto, codificacao = dados.decode("latin-1"), "latin-1"
+            self._docs[nome] = Documento(texto, nome)
+            self._codificacoes[nome] = codificacao
             self._hashes[nome] = hashlib.sha256(dados).hexdigest()
 
     @staticmethod
@@ -290,7 +314,8 @@ class ConfigR4:
             return True
         ini = self._docs[ARQUIVO_INI]
         valores = {
-            float(ini.ini_ler(alvo.secao, alvo.chave)) for alvo in spec.alvos
+            _numero(ini.ini_ler(alvo.secao, alvo.chave), alvo.secao, alvo.chave)
+            for alvo in spec.alvos
         }
         return len(valores) == 1
 
@@ -300,18 +325,20 @@ class ConfigR4:
             return self._ler_hal(spec)
         if spec.papel == "eixo_a":
             joints = self._docs[ARQUIVO_INI].ini_ler("KINS", "JOINTS")
-            return int(float(joints)) == 4
+            return int(_numero(joints, "KINS", "JOINTS")) == 4
         ini = self._docs[ARQUIVO_INI]
-        bruto = ini.ini_ler(spec.alvos[0].secao, spec.alvos[0].chave)
-        if spec.papel == "sinal":
-            return float(bruto) < 0
-        if spec.papel == "abs":
-            return abs(float(bruto))
+        alvo = spec.alvos[0]
+        bruto = ini.ini_ler(alvo.secao, alvo.chave)
         if spec.tipo is Tipo.TEXTO:
             return bruto
+        numero = _numero(bruto, alvo.secao, alvo.chave)
+        if spec.papel == "sinal":
+            return numero < 0
+        if spec.papel == "abs":
+            return abs(numero)
         if spec.tipo is Tipo.INTEIRO:
-            return int(float(bruto))
-        return float(bruto)
+            return int(numero)
+        return numero
 
     def _ler_hal(self, spec: Campo) -> Valor:
         hal = self._docs[ARQUIVO_HAL]
@@ -364,23 +391,45 @@ class ConfigR4:
         else:
             self._backups = {}
 
-        # gravação atômica (write-temp + rename)
-        gravados: list[Path] = []
-        for nome in sorted(tocados):
-            caminho = self.pasta / nome
-            dados = docs[nome].texto.encode("utf-8")
-            fd, tmp = tempfile.mkstemp(dir=self.pasta, prefix=f".{nome}.")
-            try:
+        # gravação atômica em duas fases: prepara TODOS os temporários e só
+        # então faz os os.replace — um campo pode tocar INI e HAL juntos
+        # (toggle do eixo A) e falha no meio deixaria cinemática contraditória.
+        # Se um replace falhar depois do primeiro, restaura os já trocados.
+        temporarios: dict[str, str] = {}
+        originais: dict[str, bytes] = {}
+        dados_por_nome: dict[str, bytes] = {}
+        try:
+            for nome in sorted(tocados):
+                dados = docs[nome].texto.encode(self._codificacoes[nome])
+                dados_por_nome[nome] = dados
+                originais[nome] = (self.pasta / nome).read_bytes()
+                fd, tmp = tempfile.mkstemp(dir=self.pasta, prefix=f".{nome}.")
                 with os.fdopen(fd, "wb") as f:
                     f.write(dados)
-                os.replace(tmp, caminho)
-            except OSError:
+                temporarios[nome] = tmp
+        except OSError:
+            for tmp in temporarios.values():
                 if os.path.exists(tmp):
                     os.unlink(tmp)
-                raise
+            raise
+
+        gravados: list[Path] = []
+        trocados: list[str] = []
+        try:
+            for nome, tmp in temporarios.items():
+                os.replace(tmp, self.pasta / nome)
+                trocados.append(nome)
+        except OSError:
+            for nome in trocados:  # melhor esforço: volta o conjunto antigo
+                (self.pasta / nome).write_bytes(originais[nome])
+            for nome, tmp in temporarios.items():
+                if nome not in trocados and os.path.exists(tmp):
+                    os.unlink(tmp)
+            raise
+        for nome in trocados:
             self._docs[nome] = docs[nome]
-            self._hashes[nome] = hashlib.sha256(dados).hexdigest()
-            gravados.append(caminho)
+            self._hashes[nome] = hashlib.sha256(dados_por_nome[nome]).hexdigest()
+            gravados.append(self.pasta / nome)
 
         for cid in ids:
             del self._pendentes[cid]

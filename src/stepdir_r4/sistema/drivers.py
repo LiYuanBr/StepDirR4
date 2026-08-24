@@ -64,14 +64,25 @@ def drivers_ok(estados: list[EstadoDriver]) -> bool:
     return all(e.estado == "instalado" for e in estados)
 
 
+HELPER_INSTALADO = Path("/usr/libexec/stepdir-r4/helper_drivers.py")
+"""Caminho do helper quando instalado pelo .deb (F5). O polkit casa a ação
+da `.policy` pelo caminho do PROGRAMA executado — por isso o pkexec deve
+executar o helper direto (shebang + executável), nunca `pkexec python3
+helper`, que resolveria para o python3 e cairia no prompt genérico."""
+
+
 def instalar_drivers(executar: ExecutarSistema) -> Saida:
     """Instala os `.so` embutidos via pkexec + helper (prompt de senha).
 
     O helper faz backup datado dos originais e ``install -m 644 -o root
     -g root``. pkexec devolve 126/127 quando o usuário cancela/nega.
+    Instalado pelo .deb, o helper roda direto (ação da `.policy`, prompt
+    PT-BR); rodando do código-fonte, via python3 (prompt genérico).
     """
-    helper = Path(__file__).with_name("helper_drivers.py")
     with dir_drivers_embutidos() as origem:
+        if HELPER_INSTALADO.is_file():
+            return executar(["pkexec", str(HELPER_INSTALADO), str(origem)])
+        helper = Path(__file__).with_name("helper_drivers.py")
         return executar(
             ["pkexec", sys.executable, str(helper), str(origem)]
         )

@@ -9,6 +9,7 @@ Sub-rede imposta pela placa; se outra conexão ativa do PC já usa
 
 from __future__ import annotations
 
+import ipaddress
 from dataclasses import dataclass
 
 from .execucao import ExecutarSistema, Saida
@@ -21,19 +22,25 @@ IP_HOST_PADRAO = "192.168.1.10"
 
 PREFIXO_SUBREDE = "192.168.1."
 NOME_CONEXAO = "StepDirR4"
+NOME_TEMPORARIO = "StepDirR4-nova"
+"""Nome de palco da recriação: a conexão antiga só cai depois que a nova sobe."""
 
 
 def motivo_ip_invalido(ip: str) -> str | None:
-    """None se o IP serve como host do PC no link da placa; senão o motivo."""
-    partes = ip.strip().split(".")
-    if len(partes) != 4 or not all(p.isdigit() for p in partes):
+    """None se o IP serve como host do PC no link da placa; senão o motivo.
+
+    Comparações numéricas via `ipaddress` (rejeita octetos > 255 e zeros
+    à esquerda — '192.168.1.0177' seria o IP da placa disfarçado)."""
+    try:
+        endereco = ipaddress.IPv4Address(ip.strip())
+    except ValueError:
         return "não é um endereço IPv4 válido"
-    if ".".join(partes[:3]) + "." != PREFIXO_SUBREDE:
-        return f"precisa estar na sub-rede da placa ({PREFIXO_SUBREDE}0/24)"
-    final = int(partes[3])
-    if final == 0 or final == 255:
+    rede = ipaddress.IPv4Network(PREFIXO_SUBREDE + "0/24")
+    if endereco not in rede:
+        return f"precisa estar na sub-rede da placa ({rede})"
+    if endereco in (rede.network_address, rede.broadcast_address):
         return "é endereço de rede/broadcast, não de host"
-    if ip.strip() == IP_PLACA:
+    if endereco == ipaddress.IPv4Address(IP_PLACA):
         return f"é o IP da própria placa ({IP_PLACA})"
     return None
 
@@ -73,7 +80,14 @@ def detectar_overlap(executar: ExecutarSistema, dispositivo: str) -> list[str]:
 
 def ip_em_uso(executar: ExecutarSistema, dispositivo: str, ip: str) -> str:
     """Sonda o link dedicado com arping (modo DAD): 'livre', 'em_uso' ou
-    'desconhecido' (arping ausente/falhou — não bloqueia a instalação)."""
+    'desconhecido' (arping ausente/falhou — não bloqueia a instalação).
+
+    Os códigos de saída (0=livre, 1=em uso) valem só para o arping do
+    iputils; o arping de Habets (pacote Debian 'arping') INVERTE o
+    sentido e usa outras flags. Sem confirmar a variante, 'desconhecido'."""
+    versao = executar(["arping", "-V"])
+    if "iputils" not in (versao.stdout + versao.stderr).lower():
+        return "desconhecido"
     saida = executar(
         ["arping", "-D", "-q", "-c", "2", "-w", "3", "-I", dispositivo, ip]
     )
@@ -105,12 +119,15 @@ def criar_conexao(
     if motivo:
         return ResultadoRede(False, f"IP {ip} inválido: {motivo}")
 
-    executar(["nmcli", "connection", "delete", NOME_CONEXAO])  # ok falhar
+    # monta a nova conexão sob nome temporário: uma StepDirR4 que já
+    # funcione só é apagada DEPOIS que a substituta subir (sem rollback
+    # manual, uma falha no add/up destruiria o link bom da placa)
+    executar(["nmcli", "connection", "delete", NOME_TEMPORARIO])  # sobra antiga, ok falhar
 
     criar = executar([
         "nmcli", "connection", "add",
         "type", "ethernet",
-        "con-name", NOME_CONEXAO,
+        "con-name", NOME_TEMPORARIO,
         "ifname", dispositivo,
         "ipv4.method", "manual",
         "ipv4.addresses", f"{ip}/24",
@@ -124,16 +141,25 @@ def criar_conexao(
             False, f"nmcli não criou a conexão: {criar.stderr.strip()}"
         )
 
-    ativar = executar(["nmcli", "connection", "up", NOME_CONEXAO])
+    ativar = executar(["nmcli", "connection", "up", NOME_TEMPORARIO])
     if not ativar.ok:
+        executar(["nmcli", "connection", "delete", NOME_TEMPORARIO])
         return ResultadoRede(
             False,
             f"Conexão criada, mas não ativou (cabo conectado?): "
-            f"{ativar.stderr.strip()}",
+            f"{ativar.stderr.strip()} — a conexão {NOME_CONEXAO} anterior, "
+            f"se existia, foi mantida.",
         )
+
+    executar(["nmcli", "connection", "delete", NOME_CONEXAO])  # ok falhar
+    renomear = executar([
+        "nmcli", "connection", "modify", NOME_TEMPORARIO,
+        "connection.id", NOME_CONEXAO,
+    ])
+    nome_final = NOME_CONEXAO if renomear.ok else NOME_TEMPORARIO
     return ResultadoRede(
         True,
-        f"Conexão {NOME_CONEXAO} ativa em {dispositivo} com IP {ip}/24 "
+        f"Conexão {nome_final} ativa em {dispositivo} com IP {ip}/24 "
         f"(sem gateway — sua internet não é afetada).",
     )
 

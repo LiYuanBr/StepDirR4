@@ -20,7 +20,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk  # noqa: E402
 
-from ..core import ConfigR4, ErroConfigR4  # noqa: E402
+from ..core import ConfigNaoEncontrada, ConfigR4, ErroConfigR4  # noqa: E402
 from ..core.campos import Campo, Tipo  # noqa: E402
 from .. import sistema  # noqa: E402
 from . import configurador_logica as logica  # noqa: E402
@@ -248,8 +248,15 @@ class JanelaConfigurador(Gtk.Window):
             return
         if sistema.linuxcnc_rodando(self._executar):
             sistema.parar_linuxcnc(self._executar)
+            # o unload do HAL/RTAPI leva segundos; reabrir antes mata a
+            # instância nova com "RTAPI already in use"
+            if not sistema.aguardar_linuxcnc_parar(self._executar):
+                self._alerta(logica.TEXTO_NAO_FECHOU)
+                return
         if sistema.abrir_linuxcnc(self._cfg.pasta):
-            self._atualizar_status("LinuxCNC reaberto com a nova configuração.")
+            self._atualizar_status(
+                "LinuxCNC abrindo com a nova configuração…"
+            )
         else:
             self._alerta(logica.TEXTO_SEM_LINUXCNC)
 
@@ -273,15 +280,20 @@ def main(pasta: str | None = None) -> int:
         )
         return 1
     try:
+        # JanelaConfigurador lê a config na montagem — ConfigCorrompida
+        # (âncora destruída por edição manual) sobe de ler(), não de abrir()
         cfg = ConfigR4.abrir(Path(pasta) if pasta else None)
-    except ErroConfigR4 as e:
+        janela = JanelaConfigurador(cfg)
+    except ConfigNaoEncontrada as e:
         print(
             f"Erro: {e}\n"
             "Instale a configuração primeiro: python3 -m stepdir_r4",
             file=sys.stderr,
         )
         return 1
-    janela = JanelaConfigurador(cfg)
+    except ErroConfigR4 as e:
+        print(f"Erro: {e}", file=sys.stderr)
+        return 1
     janela.show_all()
     Gtk.main()
     return 0

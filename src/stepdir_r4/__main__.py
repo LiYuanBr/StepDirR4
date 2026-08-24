@@ -13,6 +13,7 @@ Sem GUI:
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
 from . import sistema
@@ -165,6 +166,17 @@ def main(argv: list[str] | None = None) -> int:
                          help="Também testa carregar o STEPDIR-R4 no halrun")
 
     args = parser.parse_args(argv)
+
+    # vale para TODOS os comandos: rodar como root manda a config para
+    # /root/linuxcnc (Path.home) e o LinuxCNC do usuário real nunca a vê;
+    # o que precisa de root (drivers) já pede senha via pkexec
+    if os.geteuid() == 0:
+        print(
+            "Erro: não execute como root/sudo. Rode como usuário normal; "
+            "o sistema pedirá a senha quando for necessário.",
+            file=sys.stderr,
+        )
+        return 1
 
     if args.comando in (None, "wizard"):
         try:

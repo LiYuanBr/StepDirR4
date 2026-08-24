@@ -67,6 +67,11 @@ TEXTO_AVISO_REINICIAR = (
     "na máquina é interrompido. Continuar?"
 )
 
+TEXTO_NAO_FECHOU = (
+    "O LinuxCNC não terminou de fechar em 15 segundos. Feche-o "
+    "manualmente e clique em Reiniciar de novo."
+)
+
 TEXTO_SEM_LINUXCNC = (
     "O comando `linuxcnc` não foi encontrado neste sistema. "
     "Abra o LinuxCNC manualmente pelo atalho “launch R4”."

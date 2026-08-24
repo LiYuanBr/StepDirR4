@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import time
 from pathlib import Path
 
 from .execucao import ExecutarSistema
@@ -29,6 +30,23 @@ def parar_linuxcnc(executar: ExecutarSistema) -> None:
     """SIGTERM nos processos do LinuxCNC (o script oficial trata e limpa)."""
     for m in MARCADORES_PROCESSO:
         executar(["pkill", "-TERM", "-f", m])
+
+
+def aguardar_linuxcnc_parar(
+    executar: ExecutarSistema,
+    timeout_s: float = 15.0,
+    intervalo_s: float = 0.5,
+    dormir=time.sleep,
+) -> bool:
+    """Espera o LinuxCNC descarregar o HAL/RTAPI após o SIGTERM (leva
+    segundos). Reabrir antes disso mata a instância nova com "RTAPI
+    already in use". True quando parou; False no timeout."""
+    limite = time.monotonic() + timeout_s
+    while linuxcnc_rodando(executar):
+        if time.monotonic() >= limite:
+            return False
+        dormir(intervalo_s)
+    return True
 
 
 def abrir_linuxcnc(pasta_config: Path) -> bool:
