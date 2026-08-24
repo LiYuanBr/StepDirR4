@@ -214,4 +214,9 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except KeyboardInterrupt:
+        # Ctrl+C no terminal (o GTK reergue como KeyboardInterrupt):
+        # sair limpo, sem traceback. 130 = convenção 128+SIGINT.
+        raise SystemExit(130) from None
