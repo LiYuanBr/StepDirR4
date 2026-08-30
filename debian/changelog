@@ -1,0 +1,6 @@
+stepdir-r4 (0.1.0) unstable; urgency=medium
+
+  * Primeiro pacote (F5): wizard de instalação, configurador por abas,
+    helper root em /usr/libexec com política polkit, atalhos no menu.
+
+ -- LiYuanBr <112018996+LiYuanBr@users.noreply.github.com>  Sun, 30 Aug 2026 12:00:00 -0300

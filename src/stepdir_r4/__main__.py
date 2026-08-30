@@ -1,6 +1,7 @@
 """CLI do StepDir R4.
 
 `python3 -m stepdir_r4` (sem argumentos) abre o wizard GTK de instalação.
+Instalado pelo .deb o executável é `stepdir-r4`, mesmos subcomandos.
 `configurar [--pasta ...]` abre o configurador GTK da config instalada (F4).
 Sem GUI:
   `instalar [--mesa-x 800 --mesa-y 600]`  monta ~/linuxcnc/configs/R4 (F1)
@@ -15,6 +16,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from pathlib import Path
 
 from . import sistema
 from .core import ErroConfigR4, instalar_config
@@ -115,9 +117,16 @@ def _cmd_verificar(args: argparse.Namespace) -> int:
     return 0 if ok else 1
 
 
+def nome_do_programa() -> str:
+    """`stepdir-r4` quando instalado pelo .deb; `python3 -m stepdir_r4` no fonte."""
+    if Path(sys.argv[0]).name == "stepdir-r4":
+        return "stepdir-r4"
+    return "python3 -m stepdir_r4"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="stepdir_r4",
+        prog=nome_do_programa(),
         description="Instalador/configurador da placa StepDir R4 (LinuxCNC).",
     )
     sub = parser.add_subparsers(dest="comando")
@@ -186,7 +195,7 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 "Erro: GTK3/PyGObject não encontrado (pacotes python3-gi e "
                 f"gir1.2-gtk-3.0). Detalhe: {e}\n"
-                "Alternativa sem GUI: python3 -m stepdir_r4 instalar",
+                f"Alternativa sem GUI: {nome_do_programa()} instalar",
                 file=sys.stderr,
             )
             return 1
@@ -214,10 +223,15 @@ def main(argv: list[str] | None = None) -> int:
     return comandos[args.comando](args)
 
 
-if __name__ == "__main__":
+def cli() -> None:
+    """Entry point do executável ``stepdir-r4`` (console_scripts / .deb)."""
     try:
         raise SystemExit(main())
     except KeyboardInterrupt:
         # Ctrl+C no terminal (o GTK reergue como KeyboardInterrupt):
         # sair limpo, sem traceback. 130 = convenção 128+SIGINT.
         raise SystemExit(130) from None
+
+
+if __name__ == "__main__":
+    cli()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3 -I
 """Helper root mínimo — instala os drivers .so da StepDir R4.
 
 Chamado via ``pkexec python3 helper_drivers.py <pasta_origem>``; nunca
@@ -19,6 +19,15 @@ from pathlib import Path
 
 DRIVERS = ("encoder.so", "pwmgen.so", "STEPDIR-R4.so")
 DIR_MODULOS = Path("/usr/lib/linuxcnc/modules")
+
+DIR_INSTALADO = Path("/usr/libexec/stepdir-r4")
+"""Pasta do .deb (F5): helper + ``drivers/`` com os 3 .so, tudo root:root.
+Instalado ali, o helper só aceita ``DIR_INSTALADO/drivers`` como origem —
+a autorização polkit vale para a *ação*, não para os argumentos, então uma
+origem livre deixaria qualquer processo do usuário instalar .so arbitrários
+em /usr/lib/linuxcnc/modules. Rodando do código-fonte (sem .policy, prompt
+genérico do pkexec) a origem continua livre."""
+ORIGEM_INSTALADA = DIR_INSTALADO / "drivers"
 
 
 def instalar(
@@ -61,9 +70,25 @@ def main(argv: list[str]) -> int:
     if len(argv) != 2:
         print(f"uso: {argv[0]} <pasta_com_os_drivers>", file=sys.stderr)
         return 2
-    for linha in instalar(Path(argv[1]).resolve()):
+    origem = Path(argv[1]).resolve()
+    if instalado(Path(argv[0])) and origem != ORIGEM_INSTALADA:
+        print(
+            f"origem recusada: instalado pelo pacote, este helper só instala "
+            f"a partir de {ORIGEM_INSTALADA}",
+            file=sys.stderr,
+        )
+        return 2
+    for linha in instalar(origem):
         print(linha)
     return 0
+
+
+def instalado(caminho_helper: Path) -> bool:
+    """True quando o helper roda da cópia do .deb (em DIR_INSTALADO)."""
+    try:
+        return caminho_helper.resolve().parent == DIR_INSTALADO
+    except OSError:
+        return False
 
 
 if __name__ == "__main__":

@@ -287,7 +287,8 @@ def main(pasta: str | None = None) -> int:
     except ConfigNaoEncontrada as e:
         print(
             f"Erro: {e}\n"
-            "Instale a configuração primeiro: python3 -m stepdir_r4",
+            "Instale a configuração primeiro (assistente 'StepDir R4 — "
+            "Instalação' ou `stepdir-r4 instalar`).",
             file=sys.stderr,
         )
         return 1

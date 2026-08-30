@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=62.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,11 +9,16 @@ description = "Instalador e configurador da placa LinuxCNC StepDir R4"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
 
+[project.scripts]
+stepdir-r4 = "stepdir_r4.__main__:cli"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-stepdir_r4 = ["data/**/*"]
+# "**/*" do setuptools NÃO casa dotfiles — macros/.abort.ngc (ON_ABORT_COMMAND
+# do R4.ini) precisa do segundo padrão.
+stepdir_r4 = ["data/**/*", "data/**/.*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

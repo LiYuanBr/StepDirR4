@@ -1,0 +1,4 @@
+# Módulos HAL do LinuxCNC entregues byte a byte (o app valida a instalação
+# por hash SHA-256) — sem strip, por decisão de projeto
+# (specs/tech-stack.md §Distribuição).
+stepdir-r4: unstripped-binary-or-object [usr/libexec/stepdir-r4/drivers/*.so]
