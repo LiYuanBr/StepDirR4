@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=StepDir R4 — Configurador
+Name[en]=StepDir R4 — Configurator
+Comment=Ajusta eixos, spindle, probes e entradas/saídas da máquina (R4.ini/R4.hal)
+Comment[en]=Adjusts axes, spindle, probes and I/O of the machine (R4.ini/R4.hal)
+Exec=stepdir-r4 configurar
+Icon=stepdir-r4
+Terminal=false
+Categories=Science;Utility;Engineering;X-CNC;
+Keywords=LinuxCNC;CNC;StepDir;
+StartupNotify=true

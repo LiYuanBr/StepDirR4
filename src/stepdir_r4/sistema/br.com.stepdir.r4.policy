@@ -6,8 +6,8 @@
   Política polkit do helper de drivers da StepDir R4.
 
   Instalada pelo pacote .deb (F5) em /usr/share/polkit-1/actions/, com o
-  helper em /usr/libexec/stepdir-r4/ (ajustar o annotate abaixo se o
-  caminho mudar no empacotamento). Rodando do código-fonte (F3), o pkexec
+  helper e os drivers em /usr/libexec/stepdir-r4/ (ajustar os annotate
+  abaixo se o caminho mudar no empacotamento — debian/install). Rodando do código-fonte (F3), o pkexec
   funciona sem esta política, com o prompt genérico do polkit.
 -->
 <policyconfig>
@@ -21,8 +21,11 @@
     <defaults>
       <allow_any>auth_admin</allow_any>
       <allow_inactive>auth_admin</allow_inactive>
-      <allow_active>auth_admin_keep</allow_active>
+      <!-- sem _keep: a autorização cacheada vale para a ação toda,
+           independente dos argumentos, por ~5 min na sessão -->
+      <allow_active>auth_admin</allow_active>
     </defaults>
     <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/stepdir-r4/helper_drivers.py</annotate>
+    <annotate key="org.freedesktop.policykit.exec.argv1">/usr/libexec/stepdir-r4/drivers</annotate>
   </action>
 </policyconfig>

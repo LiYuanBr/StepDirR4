@@ -7,7 +7,7 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 1. **Instalador** (roda uma vez): configura a rede ethernet dedicada da placa, instala os drivers realtime com backup dos originais e monta a configuração da máquina em `~/linuxcnc/configs/R4` com atalho na área de trabalho.
 2. **Configurador** (uso contínuo): edita `R4.ini`/`R4.hal` por abas (eixos, spindle, probes, entradas/saídas estilo "ports and pins" do Mach3), com Aplicar/Salvar e reinício do LinuxCNC.
 
-**Estado atual (F4 concluída)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 84 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z, toggle do eixo A) **+ wizard gráfico de instalação completo** (pré-checagens → rede dedicada → drivers → modelo → dimensões → verificação) **+ configurador gráfico por abas** (estilo "ports and pins": eixos X/Y/Z/A, spindle, probes, entradas/saídas; Aplicar com backup / Salvar / Cancelar; Reiniciar LinuxCNC). Falta a F5: pacote `.deb` e validação em máquina real (ver `specs/roadmap.md`).
+**Estado atual (F4 concluída)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 84 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z, toggle do eixo A) **+ wizard gráfico de instalação completo** (pré-checagens → rede dedicada → drivers → modelo → dimensões → verificação) **+ configurador gráfico por abas** (estilo "ports and pins": eixos X/Y/Z/A, spindle, probes, entradas/saídas; Aplicar com backup / Salvar / Cancelar; Reiniciar LinuxCNC). **F5 em andamento**: pacote `.deb` pronto (`./empacotar.sh`); falta o teste de instalação limpa nos ISOs Debian 12 e 13 e a validação com a placa (ver `specs/roadmap.md`).
 
 ## Requisitos
 
@@ -17,7 +17,27 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 
 ## Instalação
 
-> ⚠️ Em desenvolvimento — a entrega final será um pacote único (`sudo apt install ./stepdir-r4.deb`). Este tutorial é atualizado a cada fase.
+### Pacote `.deb` (recomendado)
+
+Um único pacote instala o aplicativo (`/usr/bin/stepdir-r4`), o helper de drivers e os 3 `.so` (`/usr/libexec/stepdir-r4/`), a política polkit, os atalhos do menu e os templates da Spark V2. Na máquina do LinuxCNC:
+
+```bash
+sudo apt install ./stepdir-r4_0.1.0_amd64.deb
+```
+
+Depois abra **StepDir R4 — Instalação** no menu de aplicativos (categoria Sistema) ou rode `stepdir-r4` no terminal. O configurador fica em **StepDir R4 — Configurador** (`stepdir-r4 configurar`). Todos os subcomandos da CLI abaixo funcionam trocando `PYTHONPATH=src python3 -m stepdir_r4` por `stepdir-r4`.
+
+O `.deb` **não** grava os drivers em `/usr/lib/linuxcnc/modules` na instalação do pacote (conflitaria com o `linuxcnc-uspace`): eles ficam em `/usr/libexec/stepdir-r4/drivers/` e são copiados pelo wizard/`stepdir-r4 drivers`, com senha e backup datado. Instalado pelo pacote, o helper root só aceita essa pasta como origem (e a autorização polkit não fica em cache).
+
+**Gerar o pacote** (em qualquer Debian/Ubuntu, a partir do código-fonte):
+
+```bash
+sudo apt install build-essential debhelper dh-python pybuild-plugin-pyproject python3-all python3-setuptools lintian
+./empacotar.sh            # → dist/stepdir-r4_<versão>_amd64.deb (+ relatório do lintian)
+```
+
+O pacote é `Architecture: amd64` porque os drivers `.so` são binários amd64. Versão em `pyproject.toml` e `debian/changelog` (o teste `tests/test_empacotamento_f5.py` cobra que batam).
+
 
 ### Instalando o LinuxCNC (pré-requisito)
 
@@ -42,9 +62,9 @@ Depois reinicie e escolha o kernel PREEMPT-RT no menu de boot.
 
 > Ubuntu e Pop!_OS **não têm** o pacote `linuxcnc-uspace` nem kernel realtime disponível — nessas distros, use a Opção 1.
 
-### Tutorial (estado atual — F3)
+### Rodando do código-fonte (sem instalar o pacote)
 
-A instalação completa já funciona pelo assistente gráfico: verificação do sistema, rede dedicada da placa, drivers e a pasta de configuração `~/linuxcnc/configs/R4` a partir dos templates embutidos da Spark V2.
+A instalação completa funciona pelo assistente gráfico: verificação do sistema, rede dedicada da placa, drivers e a pasta de configuração `~/linuxcnc/configs/R4` a partir dos templates embutidos da Spark V2.
 
 ```bash
 git clone <este repositório>
@@ -111,7 +131,7 @@ Só variáveis da whitelist são alteradas; comentários dos arquivos e ediçõe
 src/stepdir_r4/
 ├── core/            # núcleo F1: editor in-place + instalador da pasta R4
 │   ├── config.py    #   ConfigR4 (ler/definir/aplicar/salvar/cancelar)
-│   ├── campos.py    #   whitelist (83 campos, 8 abas) e recursos de I/O
+│   ├── campos.py    #   whitelist (84 campos, 8 abas) e recursos de I/O
 │   ├── documento.py #   modelo de linhas com round-trip byte-idêntico
 │   └── instalador.py#   instalar_config()
 ├── gui/             # F2/F4: interfaces GTK3
@@ -124,12 +144,14 @@ src/stepdir_r4/
 │   ├── rede.py      #   conexão StepDirR4 via nmcli (sem gateway, overlap, arping)
 │   ├── drivers.py   #   estado por hash, instalação via pkexec, teste halrun
 │   ├── linuxcnc.py  #   detectar/parar/reabrir o LinuxCNC (botão Reiniciar)
-│   ├── helper_drivers.py  # helper root mínimo (chamado por pkexec)
-│   └── *.policy     #   política polkit (instalada pelo .deb na F5)
-├── __main__.py      # CLI: python3 -m stepdir_r4 [wizard|configurar|instalar|checar|rede|drivers|verificar]
+│   ├── helper_drivers.py  # helper root mínimo (chamado por pkexec; no .deb em /usr/libexec/stepdir-r4)
+│   └── *.policy     #   política polkit (instalada pelo .deb em /usr/share/polkit-1/actions)
+├── __main__.py      # CLI: python3 -m stepdir_r4 / stepdir-r4 [wizard|configurar|instalar|checar|rede|drivers|verificar]
 └── data/
     ├── config_r4/   # configuração pronta da Spark V2 → copiada para ~/linuxcnc/configs/R4
-    └── drivers/     # drivers realtime → instalados em /usr/lib/linuxcnc/modules (com backup)
+    └── drivers/     # drivers realtime (no .deb: /usr/libexec/stepdir-r4/drivers) → /usr/lib/linuxcnc/modules (com backup)
+debian/              # F5: empacotamento (control, rules, .desktop ×2, ícone SVG)
+empacotar.sh         # gera dist/stepdir-r4_<versão>_amd64.deb
 specs/               # fonte de verdade das decisões (missão, stack, roadmap)
 CONTEXT.md           # vocabulário de domínio
 ```

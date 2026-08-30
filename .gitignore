@@ -30,3 +30,13 @@ node_modules/
 .idea/
 *.swp
 .DS_Store
+
+# Empacotamento .deb (saídas do dpkg-buildpackage)
+debian/stepdir-r4/
+debian/.debhelper/
+debian/files
+debian/*.substvars
+debian/*.debhelper
+debian/*.debhelper.log
+debian/debhelper-build-stamp
+.pybuild/

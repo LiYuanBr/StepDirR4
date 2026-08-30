@@ -1,0 +1,6 @@
+src/stepdir_r4/sistema/helper_drivers.py        usr/libexec/stepdir-r4/
+src/stepdir_r4/data/drivers/*.so                usr/libexec/stepdir-r4/drivers/
+src/stepdir_r4/sistema/br.com.stepdir.r4.policy usr/share/polkit-1/actions/
+debian/br.com.stepdir.r4.desktop                usr/share/applications/
+debian/br.com.stepdir.r4.configurador.desktop   usr/share/applications/
+debian/stepdir-r4.svg                           usr/share/icons/hicolor/scalable/apps/

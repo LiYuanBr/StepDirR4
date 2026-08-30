@@ -1,0 +1,35 @@
+#!/usr/bin/make -f
+# Empacotamento do StepDir R4 (F5). Build: dpkg-buildpackage -us -uc -b
+# (ou ./empacotar.sh). Sem testes no build — rodam com `python3 -m pytest`.
+
+export PYBUILD_NAME = stepdir_r4
+export PYBUILD_DISABLE = test
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+# Os 3 .so (módulos HAL do LinuxCNC) saem do pacote Python: o dh_python3
+# renomeia qualquer .so em dist-packages (encoder.so →
+# encoder.cpython-3XX-….so) e pina python3 (<< 3.X+1) — o mesmo vale para
+# usr/lib/<pacote> e usr/share/<pacote>, que ele trata como "private dirs".
+# Vão para /usr/libexec/stepdir-r4/drivers/ (debian/install), que ele não
+# varre; drivers.py e o helper conhecem esse caminho (ORIGEM_INSTALADA).
+execute_after_dh_auto_install:
+	rm -rf debian/stepdir-r4/usr/lib/python3*/dist-packages/stepdir_r4/data/drivers
+
+# dh_clean apaga *.bak da árvore por padrão — os .bak de data/config_r4
+# são TEMPLATES versionados (linuxcnc.var.bak, tool.tbl.bak), não lixo.
+override_dh_clean:
+	dh_clean --exclude=.bak
+
+# O app valida a instalação dos drivers por hash SHA-256 dos bytes
+# embutidos: não stripar. dh_shlibdeps fica ativo (gera libc6/libm via
+# ${shlibs:Depends}); os símbolos do RTAPI não resolvidos são só avisos.
+override_dh_strip:
+override_dh_dwz:
+
+# dh_fixperms dá a+x a tudo em usr/libexec: helper precisa (pkexec executa
+# pelo caminho, casando a .policy), os .so não.
+execute_after_dh_fixperms:
+	chmod 0755 debian/stepdir-r4/usr/libexec/stepdir-r4/helper_drivers.py
+	chmod 0644 debian/stepdir-r4/usr/libexec/stepdir-r4/drivers/*.so

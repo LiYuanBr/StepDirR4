@@ -17,12 +17,20 @@ from importlib import resources
 from pathlib import Path
 
 from .execucao import ExecutarSistema, Saida
-from .helper_drivers import DIR_MODULOS, DRIVERS
+from .helper_drivers import DIR_INSTALADO, DIR_MODULOS, DRIVERS, ORIGEM_INSTALADA
 
 
 @contextmanager
 def dir_drivers_embutidos():
-    """Caminho real (Path) da pasta versionada com os 3 `.so`."""
+    """Caminho real (Path) da pasta com os 3 `.so` embutidos.
+
+    Instalado pelo .deb, os drivers ficam fora do pacote Python (o
+    dh_python3 renomearia/pinaria qualquer `.so` em dist-packages) em
+    ORIGEM_INSTALADA — a única origem que o helper instalado aceita.
+    """
+    if ORIGEM_INSTALADA.is_dir():
+        yield ORIGEM_INSTALADA
+        return
     origem = resources.files("stepdir_r4").joinpath("data/drivers")
     with resources.as_file(origem) as pasta:
         yield pasta
@@ -64,7 +72,7 @@ def drivers_ok(estados: list[EstadoDriver]) -> bool:
     return all(e.estado == "instalado" for e in estados)
 
 
-HELPER_INSTALADO = Path("/usr/libexec/stepdir-r4/helper_drivers.py")
+HELPER_INSTALADO = DIR_INSTALADO / "helper_drivers.py"
 """Caminho do helper quando instalado pelo .deb (F5). O polkit casa a ação
 da `.policy` pelo caminho do PROGRAMA executado — por isso o pkexec deve
 executar o helper direto (shebang + executável), nunca `pkexec python3

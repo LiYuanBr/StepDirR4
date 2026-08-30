@@ -1,0 +1,44 @@
+Source: stepdir-r4
+Section: misc
+Priority: optional
+Maintainer: LiYuanBr <112018996+LiYuanBr@users.noreply.github.com>
+Rules-Requires-Root: no
+Build-Depends:
+ debhelper-compat (= 13),
+ dh-python,
+ pybuild-plugin-pyproject,
+ python3-all,
+ python3-setuptools,
+Standards-Version: 4.7.2
+X-Python3-Version: >= 3.11
+Homepage: https://github.com/LiYuanBr/StepDirR4
+
+Package: stepdir-r4
+Architecture: amd64
+Depends:
+ ${python3:Depends},
+ ${shlibs:Depends},
+ ${misc:Depends},
+ python3-gi,
+ gir1.2-gtk-3.0,
+ network-manager,
+ pkexec | policykit-1,
+ polkitd | policykit-1,
+ iputils-ping,
+ iputils-arping,
+ iproute2,
+ procps,
+ xdg-user-dirs,
+Recommends:
+ linuxcnc-uspace,
+ polkit-1-auth-agent,
+Description: instalador e configurador da placa LinuxCNC StepDir R4
+ Automatiza a instalação da placa controladora StepDir R4 (rede ethernet
+ dedicada, drivers realtime com backup e pasta de configuração
+ ~/linuxcnc/configs/R4 da Spark V2) e oferece um configurador gráfico por
+ abas (eixos, spindle, probes, entradas/saídas estilo "ports and pins")
+ que edita R4.ini/R4.hal in-place preservando comentários.
+ .
+ Os drivers .so ficam em /usr/libexec/stepdir-r4/drivers e são copiados para
+ /usr/lib/linuxcnc/modules em runtime via pkexec (com backup dos
+ originais), para não conflitar com o pacote linuxcnc-uspace.
