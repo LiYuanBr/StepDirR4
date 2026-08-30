@@ -54,7 +54,7 @@ cd StepDirR4
 PYTHONPATH=src python3 -m stepdir_r4
 ```
 
-O wizard guia em 8 passos: boas-vindas → **verificação do sistema** (LinuxCNC, kernel PREEMPT-RT, GTK) → **rede da placa** (cria a conexão `StepDirR4` na porta ethernet do cabo, IP do PC `192.168.1.10/24` sem gateway — a internet do PC não é afetada; IP editável em "Avançado") → **drivers** (instala `encoder.so`, `pwmgen.so` e `STEPDIR-R4.so` em `/usr/lib/linuxcnc/modules` com backup datado; pede a senha de administrador) → modelo da CNC (Spark V2) → dimensões da mesa (padrão 800×600 mm, atalho opcional no Desktop) → resumo → instalação + **verificação final** (ping na placa em `192.168.1.177` e integridade dos drivers). As etapas de rede e drivers podem ser puladas e feitas depois. Não execute como root — o assistente recusa.
+O wizard guia em 8 passos: boas-vindas → **verificação do sistema** (LinuxCNC, kernel PREEMPT-RT, GTK) → **rede da placa** (escolha a porta ethernet do cabo e siga; a conexão `StepDirR4` é criada ao avançar, com IP do PC `192.168.1.10/24` sem gateway — a internet do PC não é afetada; IP editável em "Avançado". A lista mostra a porta da internet marcada como tal e nunca a pré-seleciona) → **drivers** (instala `encoder.so`, `pwmgen.so` e `STEPDIR-R4.so` em `/usr/lib/linuxcnc/modules` com backup datado; pede a senha de administrador) → modelo da CNC (Spark V2) → dimensões da mesa (padrão 800×600 mm, atalho opcional no Desktop) → resumo → instalação + **verificação final** (ping na placa em `192.168.1.177` e integridade dos drivers). As etapas de rede e drivers podem ser puladas e feitas depois. Não execute como root — o assistente recusa.
 
 Alternativa sem GUI (mesmos passos, pelo terminal):
 
@@ -62,7 +62,7 @@ Alternativa sem GUI (mesmos passos, pelo terminal):
 # pré-checagens do sistema + estado dos drivers:
 PYTHONPATH=src python3 -m stepdir_r4 checar
 
-# rede dedicada da placa (porta detectada automaticamente se houver só uma):
+# rede dedicada da placa (porta detectada automaticamente se só uma não for a da internet):
 PYTHONPATH=src python3 -m stepdir_r4 rede            # ou --dispositivo enp3s0 --ip 192.168.1.10
 
 # drivers (pede a senha via pkexec, faz backup datado dos originais):

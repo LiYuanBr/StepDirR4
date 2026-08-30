@@ -55,13 +55,14 @@ def _cmd_rede(args: argparse.Namespace) -> int:
     executar = sistema.executar_real
     dispositivo = args.dispositivo
     if not dispositivo:
-        dispositivos = sistema.listar_ethernet(executar)
-        if len(dispositivos) == 1:
-            dispositivo = dispositivos[0][0]
+        portas = sistema.listar_portas(executar)
+        candidatas = [p for p in portas if not p.internet]
+        if len(candidatas) == 1:
+            dispositivo = candidatas[0].nome
         else:
-            nomes = ", ".join(d for d, _ in dispositivos) or "nenhum encontrado"
+            nomes = "; ".join(p.rotulo for p in portas) or "nenhum encontrado"
             print(
-                f"Escolha a porta com --dispositivo (ethernet: {nomes})",
+                f"Escolha a porta com --dispositivo ({nomes})",
                 file=sys.stderr,
             )
             return 1

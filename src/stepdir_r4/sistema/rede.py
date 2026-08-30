@@ -58,6 +58,62 @@ def listar_ethernet(executar: ExecutarSistema) -> list[tuple[str, str]]:
     return dispositivos
 
 
+ESTADOS_PT = {
+    "connected": "em uso",
+    "disconnected": "livre",
+    "unavailable": "sem cabo",
+    "unmanaged": "fora do NetworkManager",
+    "connecting": "conectando",
+    "deactivating": "desligando",
+}
+"""Estados do nmcli em PT-BR. 'disconnected' NÃO é cabo solto: é porta
+sem conexão ativa — a tradução literal fazia o usuário achar que o link
+da placa estava caído."""
+
+
+@dataclass(frozen=True)
+class PortaRede:
+    """Porta ethernet candidata a receber o link da placa."""
+
+    nome: str
+    estado: str
+    internet: bool
+    """True se a rota default do PC sai por ela — não é a porta da placa."""
+
+    @property
+    def rotulo(self) -> str:
+        if self.internet:
+            return f"{self.nome} — sua internet (não é a placa)"
+        return f"{self.nome} — {ESTADOS_PT.get(self.estado, self.estado)}"
+
+
+def interfaces_rota_default(executar: ExecutarSistema) -> set[str]:
+    """Interfaces por onde sai a rota default (a internet do PC)."""
+    saida = executar(["ip", "-o", "-4", "route", "show", "default"])
+    if not saida.ok:
+        return set()
+    nomes = set()
+    for linha in saida.stdout.split("\n"):
+        partes = linha.split()
+        if "dev" in partes:
+            nomes.add(partes[partes.index("dev") + 1])
+    return nomes
+
+
+def listar_portas(executar: ExecutarSistema) -> list[PortaRede]:
+    """Portas ethernet, com as da internet no fim da lista.
+
+    A porta da placa nunca é a da rota default; ordenar assim faz o
+    primeiro item ser um palpite seguro para pré-seleção na GUI.
+    """
+    internet = interfaces_rota_default(executar)
+    portas = [
+        PortaRede(nome, estado, nome in internet)
+        for nome, estado in listar_ethernet(executar)
+    ]
+    return sorted(portas, key=lambda p: p.internet)
+
+
 def detectar_overlap(executar: ExecutarSistema, dispositivo: str) -> list[str]:
     """Interfaces ≠ `dispositivo` com IP ativo em 192.168.1.0/24.
 

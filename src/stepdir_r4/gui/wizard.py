@@ -16,7 +16,7 @@ import sys
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk  # noqa: E402
+from gi.repository import GLib, Gtk  # noqa: E402
 
 from ..core import ErroConfigR4, instalar_config  # noqa: E402
 from .. import sistema  # noqa: E402
@@ -66,6 +66,7 @@ class WizardInstalacao(Gtk.Assistant):
         self._sucesso = False
         self._checagens_ok = False
         self._rede_feita = False
+        self._rede_dispositivo: str | None = None
         self._drivers_feitos = False
 
         self._montar_boas_vindas()
@@ -166,9 +167,8 @@ class WizardInstalacao(Gtk.Assistant):
         avancado.add(grade_av)
         caixa.pack_start(avancado, False, False, 0)
 
-        self._botao_rede = Gtk.Button(label="Criar conexão de rede")
-        self._botao_rede.connect("clicked", self._ao_criar_rede)
-        caixa.pack_start(self._botao_rede, False, False, 0)
+        self._combo_dispositivo.connect("changed", self._ao_mudar_rede)
+        self._entrada_ip.connect("changed", self._ao_mudar_rede)
 
         self._rotulo_rede = _texto("")
         caixa.pack_start(self._rotulo_rede, False, False, 0)
@@ -180,7 +180,7 @@ class WizardInstalacao(Gtk.Assistant):
         caixa.pack_start(self._check_pular_rede, False, False, 0)
 
         self._pagina_rede = caixa
-        self.append_page(caixa)
+        self._indice_rede = self.append_page(caixa)
         self.set_page_type(caixa, Gtk.AssistantPageType.CONTENT)
         self.set_page_title(caixa, "Rede")
         self.set_page_complete(caixa, False)
@@ -343,35 +343,51 @@ class WizardInstalacao(Gtk.Assistant):
     def _preparar_rede(self) -> None:
         ativo = self._combo_dispositivo.get_active_id()
         self._combo_dispositivo.remove_all()
-        dispositivos = sistema.listar_ethernet(self._executar)
-        for nome, estado in dispositivos:
-            self._combo_dispositivo.append(nome, f"{nome} ({estado})")
-        if dispositivos:
-            if ativo and not self._combo_dispositivo.set_active_id(ativo):
-                self._combo_dispositivo.set_active(0)
-            elif not ativo:
+        portas = sistema.listar_portas(self._executar)
+        for porta in portas:
+            self._combo_dispositivo.append(porta.nome, porta.rotulo)
+        if portas:
+            if not (ativo and self._combo_dispositivo.set_active_id(ativo)):
                 self._combo_dispositivo.set_active(0)
         else:
             self._rotulo_rede.set_text(
                 "Nenhuma porta de rede ethernet encontrada. Conecte o cabo "
                 "da placa ou pule esta etapa."
             )
+        self._ao_mudar_rede(None)
 
-    def _ao_pular_rede(self, check: Gtk.CheckButton) -> None:
+    def _ao_mudar_rede(self, _widget: Gtk.Widget | None) -> None:
+        """Escolher porta + IP válido já libera o Next; a conexão é criada
+        ao avançar (`_ao_preparar`), sem botão extra."""
+        if self._rede_feita and self._combo_dispositivo.get_active_id() != (
+            self._rede_dispositivo
+        ):
+            self._rede_feita = False  # trocou de porta: refazer ao avançar
+        pronta = bool(self._combo_dispositivo.get_active_id()) and (
+            sistema.motivo_ip_invalido(self._entrada_ip.get_text().strip())
+            is None
+        )
         self.set_page_complete(
-            self._pagina_rede, check.get_active() or self._rede_feita
+            self._pagina_rede,
+            pronta or self._check_pular_rede.get_active(),
         )
 
-    def _ao_criar_rede(self, _botao: Gtk.Button) -> None:
+    def _ao_pular_rede(self, _check: Gtk.CheckButton) -> None:
+        self._ao_mudar_rede(None)
+
+    def _criar_rede_ao_avancar(self) -> bool:
+        """Cria a conexão ao sair da página de rede. False = ficar na página."""
+        if self._rede_feita or self._check_pular_rede.get_active():
+            return True
         dispositivo = self._combo_dispositivo.get_active_id()
         if not dispositivo:
             self._rotulo_rede.set_text("Escolha a porta de rede primeiro.")
-            return
+            return False
         ip = self._entrada_ip.get_text().strip()
         motivo = sistema.motivo_ip_invalido(ip)
         if motivo:
             self._rotulo_rede.set_text(f"IP {ip} inválido: {motivo}")
-            return
+            return False
 
         avisos: list[str] = []
         conflitos = sistema.detectar_overlap(self._executar, dispositivo)
@@ -382,15 +398,13 @@ class WizardInstalacao(Gtk.Assistant):
                 f"O IP {ip} já está em uso no link da placa (arping). "
                 "Escolha outro em Avançado."
             )
-            return
+            return False
 
         resultado = sistema.criar_conexao(self._executar, dispositivo, ip)
         self._rede_feita = resultado.ok
-        self._rotulo_rede.set_text(
-            "\n\n".join([*avisos, resultado.detalhe])
-        )
-        if resultado.ok:
-            self.set_page_complete(self._pagina_rede, True)
+        self._rede_dispositivo = dispositivo if resultado.ok else None
+        self._rotulo_rede.set_text("\n\n".join([*avisos, resultado.detalhe]))
+        return resultado.ok
 
     def _preparar_drivers(self) -> None:
         estados = sistema.estado_drivers()
@@ -447,6 +461,11 @@ class WizardInstalacao(Gtk.Assistant):
         elif pagina is self._pagina_rede:
             self._preparar_rede()
         elif pagina is self._pagina_drivers:
+            if not self._criar_rede_ao_avancar():
+                # voltar fora do handler: trocar de página dentro do
+                # próprio "prepare" reentra no sinal
+                GLib.idle_add(self.set_current_page, self._indice_rede)
+                return
             self._preparar_drivers()
         elif pagina is self._pagina_resumo:
             self._rotulo_resumo.set_text(
