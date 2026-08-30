@@ -89,7 +89,9 @@ def pre_checagens(executar: ExecutarSistema) -> list[Checagem]:
         "presente" if gtk else "pacotes python3-gi/gir1.2-gtk-3.0 ausentes",
     ))
 
-    suportada = versao is not None and versao.startswith(VERSOES_SUPORTADAS)
+    # versão dpkg pode ter epoch ("1:2.9.10" no Debian 13) — ignorá-lo
+    sem_epoch = versao.split(":", 1)[-1] if versao else None
+    suportada = sem_epoch is not None and sem_epoch.startswith(VERSOES_SUPORTADAS)
     resultados.append(Checagem(
         "versao_suportada",
         "Versão do LinuxCNC suportada pelos drivers",
