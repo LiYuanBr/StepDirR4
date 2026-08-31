@@ -29,7 +29,23 @@ def faixa(campo: Campo) -> tuple[float, float, float, int]:
     maximo = campo.maximo if campo.maximo is not None else FAIXA_LIVRE
     if campo.tipo in (Tipo.INTEIRO, Tipo.PINO_ENTRADA, Tipo.PINO_SAIDA):
         return float(minimo), float(maximo), 1.0, 0
-    return float(minimo), float(maximo), 1.0, 3
+    # 10 casas = a precisão que o núcleo grava no arquivo (config._fmt
+    # arredonda em 10); o SCALE do eixo A usa 9 (53.333333333). A exibição
+    # corta os zeros à direita (formatar_numero), então "250" segue "250".
+    return float(minimo), float(maximo), 1.0, 10
+
+
+def formatar_numero(valor: float, digitos: int) -> str:
+    """Número no estilo do arquivo: sem zeros à direita ("250", "0.5").
+
+    O SpinButton mostraria casas fixas ("250.000"); o R4.ini escreve
+    inteiro sem casa decimal e float curto (`core.config._fmt`) — a UI
+    acompanha para o usuário reconhecer o valor do arquivo.
+    """
+    arredondado = round(float(valor), digitos)
+    if arredondado == int(arredondado):
+        return str(int(arredondado))
+    return f"{arredondado:.{digitos}f}".rstrip("0")
 
 
 def rotulo_widget(campo: Campo) -> str:

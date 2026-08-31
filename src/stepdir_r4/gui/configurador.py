@@ -116,6 +116,7 @@ class JanelaConfigurador(Gtk.Window):
         spin = Gtk.SpinButton(adjustment=ajuste, digits=digitos, numeric=True)
         spin.set_width_chars(12)
         spin.connect("value-changed", self._ao_mudar_numero)
+        spin.connect("output", self._ao_formatar_numero)
         return spin
 
     def _montar_barra(self) -> Gtk.Widget:
@@ -161,6 +162,13 @@ class JanelaConfigurador(Gtk.Window):
 
     def _ao_mudar_texto(self, entrada: Gtk.Entry) -> None:
         self._definir(entrada, entrada.get_text())
+
+    def _ao_formatar_numero(self, spin: Gtk.SpinButton) -> bool:
+        # exibe como o arquivo (250, não 250.000); True = não reformatar
+        spin.set_text(logica.formatar_numero(
+            spin.get_adjustment().get_value(), spin.get_digits()
+        ))
+        return True
 
     def _ao_mudar_numero(self, spin: Gtk.SpinButton) -> None:
         self._definir(spin, spin.get_value())
