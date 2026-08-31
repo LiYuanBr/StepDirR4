@@ -25,7 +25,7 @@ Um único pacote instala o aplicativo (`/usr/bin/stepdir-r4`), o helper de drive
 sudo apt install ./stepdir-r4_0.1.0_amd64.deb
 ```
 
-Depois abra **StepDir R4 - Setup** no menu de aplicativos (categoria Sistema) ou rode `stepdir-r4` no terminal. O configurador fica em **StepDir R4 - Config** (`stepdir-r4 configurar`). Todos os subcomandos da CLI abaixo funcionam trocando `PYTHONPATH=src python3 -m stepdir_r4` por `stepdir-r4`.
+Depois abra **StepDir R4 — Setup** no menu de aplicativos (categoria Sistema) ou rode `stepdir-r4` no terminal. O configurador fica em **StepDir R4 — Config** (`stepdir-r4 configurar`). Todos os subcomandos da CLI abaixo funcionam trocando `PYTHONPATH=src python3 -m stepdir_r4` por `stepdir-r4`.
 
 O `.deb` **não** grava os drivers em `/usr/lib/linuxcnc/modules` na instalação do pacote (conflitaria com o `linuxcnc-uspace`): eles ficam em `/usr/libexec/stepdir-r4/drivers/` e são copiados pelo wizard/`stepdir-r4 drivers`, com senha e backup datado. Instalado pelo pacote, o helper root só aceita essa pasta como origem (e a autorização polkit não fica em cache).
 

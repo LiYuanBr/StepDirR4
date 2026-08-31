@@ -58,7 +58,7 @@ class WizardInstalacao(Gtk.Assistant):
     """Assistente de instalação completa (config + rede + drivers)."""
 
     def __init__(self, executar: sistema.ExecutarSistema | None = None) -> None:
-        super().__init__(title="StepDir R4 - Setup")
+        super().__init__(title="StepDir R4 — Setup")
         self.set_default_size(680, 520)
 
         self._executar = executar or sistema.executar_real
