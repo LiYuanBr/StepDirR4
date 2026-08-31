@@ -1,7 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=StepDir R4 — Instalação
-Name[en]=StepDir R4 — Setup
+Name=StepDir R4 - Setup
 Comment=Instala a placa StepDir R4 (rede, drivers e configuração do LinuxCNC)
 Comment[en]=Installs the StepDir R4 board (network, drivers and LinuxCNC config)
 Exec=stepdir-r4
