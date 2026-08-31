@@ -475,6 +475,10 @@ class WizardInstalacao(Gtk.Assistant):
             )
         elif pagina is self._pagina_final and self._resultado_texto is not None:
             self._rotulo_final.set_text(self._resultado_texto)
+            # label selecionável ganha o foco da página e o GTK seleciona
+            # o texto todo — parece "tudo marcado" sem o usuário ter feito
+            # nada. Limpar a seleção depois que o foco assentar.
+            GLib.idle_add(self._rotulo_final.select_region, 0, 0)
 
     def _ao_aplicar(self, _assistente: Gtk.Assistant) -> None:
         params = self._parametros()
