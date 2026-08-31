@@ -7,7 +7,7 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 1. **Instalador** (roda uma vez): configura a rede ethernet dedicada da placa, instala os drivers realtime com backup dos originais e monta a configuração da máquina em `~/linuxcnc/configs/R4` com atalho na área de trabalho.
 2. **Configurador** (uso contínuo): edita `R4.ini`/`R4.hal` por abas (eixos, spindle, probes, entradas/saídas estilo "ports and pins" do Mach3), com Aplicar/Salvar e reinício do LinuxCNC.
 
-**Estado atual (F4 concluída)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 84 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z, toggle do eixo A) **+ wizard gráfico de instalação completo** (pré-checagens → rede dedicada → drivers → modelo → dimensões → verificação) **+ configurador gráfico por abas** (estilo "ports and pins": eixos X/Y/Z/A, spindle, probes, entradas/saídas; Aplicar com backup / Salvar / Cancelar; Reiniciar LinuxCNC). **F5**: pacote `.deb` (`./empacotar.sh`), testado nas duas versões do ISO do LinuxCNC.
+**Estado atual (1.x)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 84 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z, toggle do eixo A) **+ wizard gráfico de instalação completo** (pré-checagens → rede dedicada → drivers → modelo → dimensões → verificação) **+ configurador gráfico por abas** (estilo "ports and pins": eixos X/Y/Z/A, spindle, probes, entradas/saídas; Aplicar com backup / Salvar / Cancelar; Reiniciar LinuxCNC). **F5**: pacote `.deb` (`./empacotar.sh`), testado nas duas versões do ISO do LinuxCNC.
 
 ## Requisitos
 
@@ -21,13 +21,19 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 
 Um único pacote instala o aplicativo (`/usr/bin/stepdir-r4`), o helper de drivers e os 3 `.so` (`/usr/libexec/stepdir-r4/`), a política polkit, os atalhos do menu e os templates da Spark V2.
 
-Baixe o `.deb` mais recente em **[Releases](https://github.com/LiYuanBr/StepDirR4/releases)** e, na máquina do LinuxCNC:
+Na máquina do LinuxCNC:
+
+1. Baixe o `.deb` mais recente na página de **[Releases](https://github.com/LiYuanBr/StepDirR4/releases)** (arquivo `stepdir-r4_<versão>_amd64.deb`, em *Assets*).
+2. Abra um terminal e instale (o arquivo baixado fica em `~/Downloads`):
 
 ```bash
+cd ~/Downloads
 sudo apt install ./stepdir-r4_0.1.0_amd64.deb
 ```
 
-Depois abra **StepDir R4 — Setup** no menu de aplicativos (categoria Sistema) ou rode `stepdir-r4` no terminal. O configurador fica em **StepDir R4 — Config** (`stepdir-r4 configurar`). Todos os subcomandos da CLI abaixo funcionam trocando `PYTHONPATH=src python3 -m stepdir_r4` por `stepdir-r4`.
+3. Abra **StepDir R4 — Setup** no menu de aplicativos (categoria **CNC**) e siga o assistente.
+
+O configurador de uso contínuo fica em **StepDir R4 — Config** (`stepdir-r4 configurar`). Todos os subcomandos da CLI abaixo funcionam trocando `PYTHONPATH=src python3 -m stepdir_r4` por `stepdir-r4`.
 
 O `.deb` **não** grava os drivers em `/usr/lib/linuxcnc/modules` na instalação do pacote (conflitaria com o `linuxcnc-uspace`): eles ficam em `/usr/libexec/stepdir-r4/drivers/` e são copiados pelo wizard/`stepdir-r4 drivers`, com senha e backup datado. Instalado pelo pacote, o helper root só aceita essa pasta como origem (e a autorização polkit não fica em cache).
 
@@ -38,7 +44,7 @@ sudo apt install build-essential debhelper dh-python pybuild-plugin-pyproject py
 ./empacotar.sh            # → dist/stepdir-r4_<versão>_amd64.deb (+ relatório do lintian)
 ```
 
-O pacote é `Architecture: amd64` porque os drivers `.so` são binários amd64. Versão em `pyproject.toml` e `debian/changelog` (o teste `tests/test_empacotamento_f5.py` cobra que batam).
+O pacote é `Architecture: amd64` porque os drivers `.so` são binários amd64. Versão em `pyproject.toml` e `debian/changelog` (devem bater).
 
 
 ### Instalando o LinuxCNC (pré-requisito)
