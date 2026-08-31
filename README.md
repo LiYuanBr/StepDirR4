@@ -19,7 +19,9 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 
 ### Pacote `.deb` (recomendado)
 
-Um único pacote instala o aplicativo (`/usr/bin/stepdir-r4`), o helper de drivers e os 3 `.so` (`/usr/libexec/stepdir-r4/`), a política polkit, os atalhos do menu e os templates da Spark V2. Na máquina do LinuxCNC:
+Um único pacote instala o aplicativo (`/usr/bin/stepdir-r4`), o helper de drivers e os 3 `.so` (`/usr/libexec/stepdir-r4/`), a política polkit, os atalhos do menu e os templates da Spark V2.
+
+Baixe o `.deb` mais recente em **[Releases](https://github.com/LiYuanBr/StepDirR4/releases)** e, na máquina do LinuxCNC:
 
 ```bash
 sudo apt install ./stepdir-r4_0.1.0_amd64.deb
