@@ -7,7 +7,7 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 1. **Instalador** (roda uma vez): configura a rede ethernet dedicada da placa, instala os drivers realtime com backup dos originais e monta a configuração da máquina em `~/linuxcnc/configs/R4` com atalho na área de trabalho.
 2. **Configurador** (uso contínuo): edita `R4.ini`/`R4.hal` por abas (eixos, spindle, probes, entradas/saídas estilo "ports and pins" do Mach3), com Aplicar/Salvar e reinício do LinuxCNC.
 
-**Estado atual (F4 concluída)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 84 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z, toggle do eixo A) **+ wizard gráfico de instalação completo** (pré-checagens → rede dedicada → drivers → modelo → dimensões → verificação) **+ configurador gráfico por abas** (estilo "ports and pins": eixos X/Y/Z/A, spindle, probes, entradas/saídas; Aplicar com backup / Salvar / Cancelar; Reiniciar LinuxCNC). **F5 em andamento**: pacote `.deb` pronto (`./empacotar.sh`); falta o teste de instalação limpa nos ISOs Debian 12 e 13 e a validação com a placa (ver `specs/roadmap.md`).
+**Estado atual (F4 concluída)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 84 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z, toggle do eixo A) **+ wizard gráfico de instalação completo** (pré-checagens → rede dedicada → drivers → modelo → dimensões → verificação) **+ configurador gráfico por abas** (estilo "ports and pins": eixos X/Y/Z/A, spindle, probes, entradas/saídas; Aplicar com backup / Salvar / Cancelar; Reiniciar LinuxCNC). **F5**: pacote `.deb` (`./empacotar.sh`), testado nas duas versões do ISO do LinuxCNC.
 
 ## Requisitos
 
@@ -154,8 +154,6 @@ src/stepdir_r4/
     └── drivers/     # drivers realtime (no .deb: /usr/libexec/stepdir-r4/drivers) → /usr/lib/linuxcnc/modules (com backup)
 debian/              # F5: empacotamento (control, rules, .desktop ×2, ícone SVG)
 empacotar.sh         # gera dist/stepdir-r4_<versão>_amd64.deb
-specs/               # fonte de verdade das decisões (missão, stack, roadmap)
-CONTEXT.md           # vocabulário de domínio
 ```
 
 ## Licença
