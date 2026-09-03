@@ -48,7 +48,7 @@ setp    debounce.limit.axis.delay		2
 
 #===========================/Emergencia/================================    
 
-net		emergengia-in		R4.input.1.not		emergencia.in0
+net		emergengia-in		R4.input.2.not		emergencia.in0
 net		no-estop-out		no-estop.out		emergencia.in1
 net		emergencia-out		emergencia.out		iocontrol.0.emc-enable-in R4.enable
 
@@ -63,10 +63,10 @@ addf lut5.0 servo-thread
 setp lut5.0.function 0x10000
 
 
-net		all-home				R4.input.2				debounce.home.axis.in  
+net		all-home				R4.input.1				debounce.home.axis.in
 net		all-home-axis									debounce.home.axis.out 
 
-net		all-limit				R4.input.2.not			debounce.limit.axis.in    
+net		all-limit				R4.input.1.not			debounce.limit.axis.in
 net		all-limit-axis									debounce.limit.axis.out 
 
 
@@ -100,8 +100,8 @@ net axis-limit-all     joint.2.pos-lim-sw-in
 loadrt or2 names=probe.or2
 addf probe.or2 servo-thread
 
-net		probe-in0-pre 		R4.input.0				probe.or2.in1
-net		probe-in1-pre		R4.input.3.not			probe.or2.in0 
+net		probe-in0-pre 		R4.input.0.not			probe.or2.in1
+#net		probe-in1-pre		R4.input.3.not			probe.or2.in0
 
 net     probe-out-pre		probe.or2.out			debounce.probe.in
 net     probe-in        	debounce.probe.out		motion.probe-input
@@ -146,7 +146,7 @@ net 	spindle-cw 			<= 		spindle.0.forward
 net		spindle-cw 			<=		R4.output.0 	
 
 net 	spindle-ccw 	    <= 		spindle.0.reverse
-net		spindle-ccw 		<=		R4.output.1 
+#net		spindle-ccw 		<=		R4.output.1
 
 net     R4-pwm       pwmgen.0.high_time =>    R4.pwm.0  
 
