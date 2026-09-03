@@ -15,6 +15,22 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 - Placa StepDir R4 conectada por cabo de rede (RJ45) dedicado.
 - Python 3.11+ e GTK3/PyGObject (já inclusos no ISO oficial).
 
+## Esquema de ligação (Spark V2)
+
+![Esquema de ligação da StepDir R4 na Spark V2](imagens/esquema-ligacao-spark-v2.jpg)
+
+A configuração que o instalador copia para `~/linuxcnc/configs/R4` já vem com os pinos deste esquema:
+
+| Recurso | Pino | Observação |
+|---|---|---|
+| Probe | `IN0` | sinal invertido — a garra vai no IN0 e a base no GND, então o toque puxa para o GND |
+| Home e fins de curso | `IN1` | o mesmo pino serve aos dois, em polaridades opostas |
+| Botão de emergência | `IN2` | normal fechado (sinal invertido) |
+| Spindle horário (CW) | `OUT0` | vai ao inversor |
+| Esquadro / refrigeração | `OUT2` | |
+
+`IN3`–`IN6` e `OUT1` ficam livres. Se a sua montagem for diferente, troque os pinos na aba **Entradas/Saídas** do configurador em vez de mexer no arquivo à mão.
+
 ## Instalação
 
 ### Pacote `.deb` (recomendado)
@@ -160,6 +176,7 @@ src/stepdir_r4/
     └── drivers/     # drivers realtime (no .deb: /usr/libexec/stepdir-r4/drivers) → /usr/lib/linuxcnc/modules (com backup)
 debian/              # F5: empacotamento (control, rules, .desktop ×2, ícone SVG)
 empacotar.sh         # gera dist/stepdir-r4_<versão>_amd64.deb
+imagens/             # esquema de ligação usado no README
 ```
 
 ## Licença
