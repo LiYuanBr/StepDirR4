@@ -7,7 +7,7 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 1. **Instalador** (roda uma vez): configura a rede ethernet dedicada da placa, instala os drivers realtime com backup dos originais e monta a configuração da máquina em `~/linuxcnc/configs/R4` com atalho na área de trabalho.
 2. **Configurador** (uso contínuo): edita `R4.ini`/`R4.hal` por abas (eixos, spindle, probes, entradas/saídas estilo "ports and pins" do Mach3), com Aplicar/Salvar e reinício do LinuxCNC.
 
-**Estado atual (1.x)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 84 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z, toggle do eixo A) **+ wizard gráfico de instalação completo** (pré-checagens → rede dedicada → drivers → modelo → dimensões → verificação) **+ configurador gráfico por abas** (estilo "ports and pins": eixos X/Y/Z/A, spindle, probes, entradas/saídas; Aplicar com backup / Salvar / Cancelar; Reiniciar LinuxCNC). **F5**: pacote `.deb` (`./empacotar.sh`), testado nas duas versões do ISO do LinuxCNC.
+**Estado atual (1.x)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 85 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z, toggle do eixo A) **+ wizard gráfico de instalação completo** (pré-checagens → rede dedicada → drivers → modelo → dimensões → verificação) **+ configurador gráfico por abas** (estilo "ports and pins": eixos X/Y/Z/A, spindle, probes, entradas/saídas; Aplicar com backup / Salvar / Cancelar; Reiniciar LinuxCNC). **F5**: pacote `.deb` (`./empacotar.sh`), testado nas duas versões do ISO do LinuxCNC.
 
 ## Requisitos
 
@@ -30,6 +30,16 @@ A configuração que o instalador copia para `~/linuxcnc/configs/R4` já vem com
 | Esquadro / refrigeração | `OUT2` | |
 
 `IN3`–`IN6` e `OUT1` ficam livres. Se a sua montagem for diferente, troque os pinos na aba **Entradas/Saídas** do configurador em vez de mexer no arquivo à mão.
+
+**Sensores de home/fim de curso**: o padrão de fábrica espera um sensor que *liga* ao detectar. O indutivo NPN normal aberto — o mais comum — faz o contrário: fica ligado em repouso e desliga ao detectar. Com ele, o fim de curso funciona mas o home nasce acionado com a máquina parada, e o referenciamento sai errado. Para esse caso marque **"Home e fins de curso — sensor desliga ao detectar"** (aba Entradas/Saídas, expander *Avançado*).
+
+Para conferir qual é o seu caso, com o LinuxCNC aberto e o sensor livre:
+
+```bash
+halcmd show pin R4.input.1
+```
+
+`TRUE` = sensor ligado em repouso, marque a opção. `FALSE` = padrão de fábrica, deixe desmarcada.
 
 ## Instalação
 
@@ -157,7 +167,7 @@ Só variáveis da whitelist são alteradas; comentários dos arquivos e ediçõe
 src/stepdir_r4/
 ├── core/            # núcleo F1: editor in-place + instalador da pasta R4
 │   ├── config.py    #   ConfigR4 (ler/definir/aplicar/salvar/cancelar)
-│   ├── campos.py    #   whitelist (84 campos, 8 abas) e recursos de I/O
+│   ├── campos.py    #   whitelist (85 campos, 8 abas) e recursos de I/O
 │   ├── documento.py #   modelo de linhas com round-trip byte-idêntico
 │   └── instalador.py#   instalar_config()
 ├── gui/             # F2/F4: interfaces GTK3
