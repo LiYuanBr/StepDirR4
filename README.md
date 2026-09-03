@@ -62,6 +62,8 @@ sudo apt install build-essential debhelper dh-python pybuild-plugin-pyproject py
 
 O pacote é `Architecture: amd64` — serve qualquer PC **Intel ou AMD de 64 bits** (amd64 é o nome da arquitetura x86-64, não a marca do processador). Não há suporte a ARM (ex.: Raspberry Pi): os drivers `.so` do fabricante são binários x86-64. Versão em `pyproject.toml` e `debian/changelog` (devem bater).
 
+> `debian/changelog` **não é versionado** — é local de quem empacota. Sem ele o `dpkg-buildpackage` não roda, então um clone limpo precisa criar o arquivo antes de gerar o `.deb`. Os pacotes oficiais saem da página de [Releases](https://github.com/LiYuanBr/StepDirR4/releases).
+
 
 ### Instalando o LinuxCNC (pré-requisito)
 

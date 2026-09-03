@@ -31,6 +31,9 @@ node_modules/
 *.swp
 .DS_Store
 
+# Changelog do pacote: local, nunca versionado
+debian/changelog
+
 # Empacotamento .deb (saídas do dpkg-buildpackage)
 debian/stepdir-r4/
 debian/.debhelper/
