@@ -44,7 +44,7 @@ Na máquina do LinuxCNC:
 
 ```bash
 cd ~/Downloads
-sudo apt install ./stepdir-r4_0.1.0_amd64.deb
+sudo apt install ./stepdir-r4_0.1.1_amd64.deb
 ```
 
 3. Abra **StepDir R4 — Setup** no menu de aplicativos (categoria **CNC**) e siga o assistente.
