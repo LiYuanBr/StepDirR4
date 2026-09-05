@@ -299,17 +299,23 @@ def _campos_io() -> list[Campo]:
                                           "sinal."))
         if rec.com_polaridade_par:
             campos.append(Campo(f"io.{rid}.polaridade_invertida",
-                                f"{rotulo} — sensor desliga ao detectar",
+                                f"{rotulo} — sensor liga ao detectar",
                                 "io", classe, Tipo.BOOL,
                                 papel="polaridade_par", recurso=rid,
-                                descricao="Marque para sensores que ficam "
-                                          "ligados em repouso e desligam ao "
-                                          "detectar (indutivo NPN normal "
-                                          "aberto). O mesmo pino serve ao home "
-                                          "e ao fim de curso em polaridades "
-                                          "opostas, então o .not troca de lado "
-                                          "entre as duas linhas em vez de "
-                                          "entrar nas duas."))
+                                descricao="Deixe DESMARCADO para o sensor "
+                                          "indutivo NPN normal aberto da Spark "
+                                          "V2 (entrada ligada em repouso, "
+                                          "desliga ao detectar) — é o que o "
+                                          "padrão de fábrica espera. Marque só "
+                                          "se o seu sensor faz o contrário "
+                                          "(PNP ou normal fechado: desligado "
+                                          "em repouso, liga ao detectar). "
+                                          "Marcado errado, o fim de curso fica "
+                                          "acionado com a máquina parada. O "
+                                          "mesmo pino serve ao home e ao fim "
+                                          "de curso em polaridades opostas, "
+                                          "então o .not troca de lado entre "
+                                          "as duas linhas."))
     return campos
 
 

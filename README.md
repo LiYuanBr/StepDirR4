@@ -31,7 +31,7 @@ A configuração que o instalador copia para `~/linuxcnc/configs/R4` já vem com
 
 `IN3`–`IN6` e `OUT1` ficam livres. Se a sua montagem for diferente, troque os pinos na aba **Entradas/Saídas** do configurador em vez de mexer no arquivo à mão.
 
-**Sensores de home/fim de curso**: o padrão de fábrica espera um sensor que *liga* ao detectar. O indutivo NPN normal aberto — o mais comum — faz o contrário: fica ligado em repouso e desliga ao detectar. Com ele, o fim de curso funciona mas o home nasce acionado com a máquina parada, e o referenciamento sai errado. Para esse caso marque **"Home e fins de curso — sensor desliga ao detectar"** (aba Entradas/Saídas, expander *Avançado*).
+**Sensores de home/fim de curso**: o padrão de fábrica é feito para o sensor indutivo **NPN normal aberto** da Spark V2 — a entrada fica ligada em repouso e desliga ao detectar. O `all-home` lê o pino cru (ativo em repouso) e o `all-limit` lê o `.not`: o LinuxCNC, ao referenciar, primeiro "sai" do home andando no sentido contrário a `HOME_SEARCH_VEL` até o sensor detectar, e depois acha a borda em baixa velocidade — é assim que o template funciona, não mexa. Só se o seu sensor for do tipo contrário (PNP ou normal fechado: desligado em repouso, liga ao detectar) marque **"Home e fins de curso — sensor liga ao detectar"** (aba Entradas/Saídas, expander *Avançado*). Marcada com o sensor errado, a opção deixa o **fim de curso acionado com a máquina parada** e o LinuxCNC recusa qualquer movimento ("limite atingido").
 
 Para conferir qual é o seu caso, com o LinuxCNC aberto e o sensor livre:
 
@@ -39,7 +39,7 @@ Para conferir qual é o seu caso, com o LinuxCNC aberto e o sensor livre:
 halcmd show pin R4.input.1
 ```
 
-`TRUE` = sensor ligado em repouso, marque a opção. `FALSE` = padrão de fábrica, deixe desmarcada.
+`R4.input.1` = `TRUE` (ligado em repouso) → NPN normal aberto, deixe a opção **desmarcada**. `FALSE` → marque a opção. Em qualquer caso, com a máquina parada e longe dos sensores, `all-limit` tem que estar `FALSE`.
 
 ## Instalação
 
