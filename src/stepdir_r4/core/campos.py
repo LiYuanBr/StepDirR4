@@ -84,6 +84,9 @@ class Campo:
     #                 | "invertido" | "polaridade_par"
     papel: str | None = None
     recurso: str | None = None  # id do RecursoHal, para campos io.*
+    # valor numérico de uma linha `setp <pino> <valor>` do R4.hal (regex da
+    # linha, comentada ou não); só o token do valor é reescrito
+    alvo_hal: str | None = None
 
 
 ABAS: tuple[AbaSpec, ...] = (
@@ -408,6 +411,23 @@ def _montar() -> dict[str, Campo]:
               descricao="Distância que o eixo Z desce até tocar o probe "
                         "fixo. Valor negativo, como a descida de procura "
                         "(Spark V2: -30)."),
+        Campo("probes.filtro_ruido", "Filtro anti-ruído do probe", "probes",
+              Classe.AVANCADA, Tipo.INTEIRO, "ms", minimo=1, maximo=500,
+              alvo_hal=r"setp\s+debounce\.probe\.delay\s",
+              descricao="Tempo mínimo, em milissegundos, que o sinal do "
+                        "probe precisa permanecer estável para ser aceito "
+                        "(debounce.probe.delay no R4.hal). Valores baixos "
+                        "deixam passar interferência elétrica do cabo — "
+                        "vinda do inversor ou do spindle — e provocam "
+                        "acionamentos falsos: a imagem do probe pisca sem "
+                        "contato e o LinuxCNC interrompe o movimento com "
+                        "\"Probe tripped during non-probe move\". Valores "
+                        "altos atrasam a detecção do toque. Padrão 20 ms "
+                        "(0,007 mm de erro na velocidade de toque da macro, "
+                        "20 mm/min); em ambiente ruidoso, até 50 ms. Sem "
+                        "efeito sobre o restante da máquina. A correção "
+                        "definitiva é o cabo do probe blindado e afastado "
+                        "dos cabos do spindle."),
     ]
     campos += _campos_eixo("eixo_x", "AXIS_X", "JOINT_0", angular=False)
     campos += _campos_eixo("eixo_y", "AXIS_Y", "JOINT_1", angular=False)
