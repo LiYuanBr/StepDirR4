@@ -127,3 +127,21 @@ class Documento:
         self._linhas[i] = re.sub(
             r"R4\.(?:input|output)\.\d+(?:\.not)?", token, linha, count=1
         )
+
+    _RE_SETP = re.compile(r"^(?P<prefixo>\s*#?\s*setp\s+\S+\s+)(?P<valor>\S+)")
+
+    def hal_setp_valor(self, i: int) -> str:
+        """Token do valor de uma linha `setp <pino> <valor>` (comentada ou não)."""
+        m = self._RE_SETP.match(self._linhas[i])
+        if m is None:
+            raise ConfigCorrompida("setp", self.nome)
+        return m.group("valor")
+
+    def hal_setp_definir(self, i: int, valor: str) -> None:
+        """Reescreve só o token do valor do `setp`, preservando espaçamento e
+        o que vier depois (comentário inline)."""
+        m = self._RE_SETP.match(self._linhas[i])
+        if m is None:
+            raise ConfigCorrompida("setp", self.nome)
+        linha = self._linhas[i]
+        self._linhas[i] = linha[: m.start("valor")] + valor + linha[m.end("valor") :]

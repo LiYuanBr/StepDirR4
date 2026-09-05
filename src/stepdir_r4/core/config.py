@@ -327,6 +327,11 @@ class ConfigR4:
         spec = CAMPOS[cid]
         if spec.recurso is not None:
             return self._ler_hal(spec)
+        if spec.alvo_hal is not None:
+            hal = self._docs[ARQUIVO_HAL]
+            bruto = hal.hal_setp_valor(hal.hal_indice(spec.alvo_hal))
+            numero = _numero(bruto, "setp", spec.alvo_hal)
+            return int(numero) if spec.tipo is Tipo.INTEIRO else numero
         if spec.papel == "eixo_a":
             joints = self._docs[ARQUIVO_INI].ini_ler("KINS", "JOINTS")
             return int(_numero(joints, "KINS", "JOINTS")) == 4
@@ -460,6 +465,10 @@ class ConfigR4:
             return {ARQUIVO_INI, ARQUIVO_HAL}
         if spec.recurso is not None:
             self._materializar_hal(docs[ARQUIVO_HAL], spec, valor)
+            return {ARQUIVO_HAL}
+        if spec.alvo_hal is not None:
+            hal = docs[ARQUIVO_HAL]
+            hal.hal_setp_definir(hal.hal_indice(spec.alvo_hal), _fmt(valor))  # type: ignore[arg-type]
             return {ARQUIVO_HAL}
         ini = docs[ARQUIVO_INI]
         if spec.papel in ("sinal", "abs"):
