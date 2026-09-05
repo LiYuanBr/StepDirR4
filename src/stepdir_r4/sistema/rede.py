@@ -162,6 +162,12 @@ class ResultadoRede:
     detalhe: str
 
 
+def _campo(executar: ExecutarSistema, alvo: str, campo: str) -> str:
+    """Um campo da conexão `alvo` (nome ou UUID); "" se o nmcli não souber."""
+    saida = executar(["nmcli", "-g", campo, "connection", "show", alvo])
+    return saida.stdout.strip() if saida.ok else ""
+
+
 def criar_conexao(
     executar: ExecutarSistema, dispositivo: str, ip: str = IP_HOST_PADRAO
 ) -> ResultadoRede:
@@ -197,9 +203,14 @@ def criar_conexao(
             False, f"nmcli não criou a conexão: {criar.stderr.strip()}"
         )
 
-    ativar = executar(["nmcli", "connection", "up", NOME_TEMPORARIO])
+    # a partir daqui usamos o UUID: o nome ainda vai mudar, e depois de
+    # apagar a StepDirR4 antiga pode haver dois perfis com o mesmo nome
+    # por um instante (o NetworkManager permite id repetido)
+    alvo = _campo(executar, NOME_TEMPORARIO, "connection.uuid") or NOME_TEMPORARIO
+
+    ativar = executar(["nmcli", "connection", "up", alvo])
     if not ativar.ok:
-        executar(["nmcli", "connection", "delete", NOME_TEMPORARIO])
+        executar(["nmcli", "connection", "delete", alvo])
         return ResultadoRede(
             False,
             f"Conexão criada, mas não ativou (cabo conectado?): "
@@ -208,16 +219,25 @@ def criar_conexao(
         )
 
     executar(["nmcli", "connection", "delete", NOME_CONEXAO])  # ok falhar
-    renomear = executar([
-        "nmcli", "connection", "modify", NOME_TEMPORARIO,
+    executar([
+        "nmcli", "connection", "modify", alvo,
         "connection.id", NOME_CONEXAO,
     ])
-    nome_final = NOME_CONEXAO if renomear.ok else NOME_TEMPORARIO
-    return ResultadoRede(
-        True,
+    # confere no sistema em vez de confiar no código de saída do modify
+    nome_final = _campo(executar, alvo, "connection.id") or NOME_TEMPORARIO
+    detalhe = (
         f"Conexão {nome_final} ativa em {dispositivo} com IP {ip}/24 "
-        f"(sem gateway — sua internet não é afetada).",
+        f"(sem gateway — sua internet não é afetada)."
     )
+    if nome_final != NOME_CONEXAO:
+        detalhe += (
+            f" Atenção: o nome ficou {nome_final} em vez de {NOME_CONEXAO}. "
+            f"A rede funciona, mas renomeie em Configurações → Rede (ou "
+            f"`nmcli connection modify {nome_final} connection.id "
+            f"{NOME_CONEXAO}`): com o nome temporário, uma próxima execução "
+            f"deste passo apaga esta conexão antes de criar a substituta."
+        )
+    return ResultadoRede(True, detalhe)
 
 
 def pingar_placa(executar: ExecutarSistema) -> Saida:

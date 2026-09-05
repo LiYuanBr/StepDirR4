@@ -7,7 +7,7 @@ O software substitui o passo a passo manual por dois fluxos guiados (interface G
 1. **Instalador** (roda uma vez): configura a rede ethernet dedicada da placa, instala os drivers realtime com backup dos originais e monta a configuração da máquina em `~/linuxcnc/configs/R4` com atalho na área de trabalho.
 2. **Configurador** (uso contínuo): edita `R4.ini`/`R4.hal` por abas (eixos, spindle, probes, entradas/saídas estilo "ports and pins" do Mach3), com Aplicar/Salvar e reinício do LinuxCNC.
 
-**Estado atual (1.x)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 84 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z, toggle do eixo A) **+ wizard gráfico de instalação completo** (pré-checagens → rede dedicada → drivers → modelo → dimensões → verificação) **+ configurador gráfico por abas** (estilo "ports and pins": eixos X/Y/Z/A, spindle, probes, entradas/saídas; Aplicar com backup / Salvar / Cancelar; Reiniciar LinuxCNC). **F5**: pacote `.deb` (`./empacotar.sh`), testado nas duas versões do ISO do LinuxCNC.
+**Estado atual (1.x)**: núcleo editor de configuração (parser round-trip de `R4.ini`/`R4.hal`, whitelist de 85 campos em 8 abas, regras de derivação — DEADBAND, espelhos AXIS/JOINT e TRAJ, sinal do home do Z, toggle do eixo A) **+ wizard gráfico de instalação completo** (pré-checagens → rede dedicada → drivers → modelo → dimensões → verificação) **+ configurador gráfico por abas** (estilo "ports and pins": eixos X/Y/Z/A, spindle, probes, entradas/saídas; Aplicar com backup / Salvar / Cancelar; Reiniciar LinuxCNC). **F5**: pacote `.deb` (`./empacotar.sh`), testado nas duas versões do ISO do LinuxCNC.
 
 ## Requisitos
 
@@ -31,6 +31,16 @@ A configuração que o instalador copia para `~/linuxcnc/configs/R4` já vem com
 
 `IN3`–`IN6` e `OUT1` ficam livres. Se a sua montagem for diferente, troque os pinos na aba **Entradas/Saídas** do configurador em vez de mexer no arquivo à mão.
 
+**Sensores de home/fim de curso**: o padrão de fábrica é feito para o sensor indutivo **NPN normal aberto** da Spark V2 — a entrada fica ligada em repouso e desliga ao detectar. O `all-home` lê o pino cru (ativo em repouso) e o `all-limit` lê o `.not`: o LinuxCNC, ao referenciar, primeiro "sai" do home andando no sentido contrário a `HOME_SEARCH_VEL` até o sensor detectar, e depois acha a borda em baixa velocidade — é assim que o template funciona, não mexa. Só se o seu sensor for do tipo contrário (PNP ou normal fechado: desligado em repouso, liga ao detectar) marque **"Home e fins de curso — sensor liga ao detectar"** (aba Entradas/Saídas, expander *Avançado*). Marcada com o sensor errado, a opção deixa o **fim de curso acionado com a máquina parada** e o LinuxCNC recusa qualquer movimento ("limite atingido").
+
+Para conferir qual é o seu caso, com o LinuxCNC aberto e o sensor livre:
+
+```bash
+halcmd show pin R4.input.1
+```
+
+`R4.input.1` = `TRUE` (ligado em repouso) → NPN normal aberto, deixe a opção **desmarcada**. `FALSE` → marque a opção. Em qualquer caso, com a máquina parada e longe dos sensores, `all-limit` tem que estar `FALSE`.
+
 ## Instalação
 
 ### Pacote `.deb` (recomendado)
@@ -44,8 +54,16 @@ Na máquina do LinuxCNC:
 
 ```bash
 cd ~/Downloads
-sudo apt install ./stepdir-r4_0.1.1_amd64.deb
+sudo apt install ./stepdir-r4_0.1.2_amd64.deb
 ```
+
+   **Máquina sem internet** (o caso comum: PC dedicado à CNC, só com o cabo da placa): use o `dpkg` em vez do `apt`, senão o `apt` tenta baixar pacotes e trava. Tudo de que o `.deb` depende já vem no ISO oficial do LinuxCNC — nada precisa ser baixado. Copie o `.deb` por pendrive e rode:
+
+```bash
+sudo dpkg -i ./stepdir-r4_0.1.2_amd64.deb
+```
+
+   (O único pacote opcional que o ISO não traz, `iputils-arping`, só serve para avisar se outro aparelho já usa o IP do PC no cabo da placa; sem ele o assistente segue normalmente.)
 
 3. Abra **StepDir R4 — Setup** no menu de aplicativos (categoria **CNC**) e siga o assistente.
 
@@ -157,7 +175,7 @@ Só variáveis da whitelist são alteradas; comentários dos arquivos e ediçõe
 src/stepdir_r4/
 ├── core/            # núcleo F1: editor in-place + instalador da pasta R4
 │   ├── config.py    #   ConfigR4 (ler/definir/aplicar/salvar/cancelar)
-│   ├── campos.py    #   whitelist (84 campos, 8 abas) e recursos de I/O
+│   ├── campos.py    #   whitelist (85 campos, 8 abas) e recursos de I/O
 │   ├── documento.py #   modelo de linhas com round-trip byte-idêntico
 │   └── instalador.py#   instalar_config()
 ├── gui/             # F2/F4: interfaces GTK3

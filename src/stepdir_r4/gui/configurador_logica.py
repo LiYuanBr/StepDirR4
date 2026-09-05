@@ -8,6 +8,8 @@ testável sem display.
 
 from __future__ import annotations
 
+import locale
+
 from ..core import ConfigR4
 from ..core.campos import Campo, Classe, Tipo
 
@@ -35,17 +37,29 @@ def faixa(campo: Campo) -> tuple[float, float, float, int]:
     return float(minimo), float(maximo), 1.0, 10
 
 
-def formatar_numero(valor: float, digitos: int) -> str:
+def separador_decimal() -> str:
+    """Separador decimal da locale do usuário ("," em pt_BR, "." em C/en).
+
+    O SpinButton com `numeric=True` só aceita o separador da locale: em
+    pt_BR, um texto com "." é rejeitado e o campo fica EM BRANCO — e o
+    próximo update() zera o valor. Por isso a UI formata com o separador
+    local; o arquivo continua com "." (core.config._fmt não depende da
+    locale)."""
+    return locale.localeconv().get("decimal_point") or "."
+
+
+def formatar_numero(valor: float, digitos: int, separador: str = ".") -> str:
     """Número no estilo do arquivo: sem zeros à direita ("250", "0.5").
 
     O SpinButton mostraria casas fixas ("250.000"); o R4.ini escreve
     inteiro sem casa decimal e float curto (`core.config._fmt`) — a UI
-    acompanha para o usuário reconhecer o valor do arquivo.
+    acompanha para o usuário reconhecer o valor do arquivo. `separador`
+    troca o "." pelo da locale (ver `separador_decimal`).
     """
     arredondado = round(float(valor), digitos)
     if arredondado == int(arredondado):
         return str(int(arredondado))
-    return f"{arredondado:.{digitos}f}".rstrip("0")
+    return f"{arredondado:.{digitos}f}".rstrip("0").replace(".", separador)
 
 
 def rotulo_widget(campo: Campo) -> str:
