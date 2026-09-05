@@ -307,6 +307,10 @@ class ConfigR4:
                 estados = {hal.hal_comentada(i) for i in indices}
             elif spec.papel == "pino":
                 estados = {hal.hal_token_pino(i)[1] for i in indices}
+            elif spec.papel == "polaridade_par":
+                # as duas linhas têm de estar em polaridades opostas
+                nots = [hal.hal_token_pino(i)[2] for i in indices]
+                return nots[0] is not nots[1]
             else:
                 return True  # invertido: só a primeira linha define
             return len(estados) == 1
@@ -349,6 +353,8 @@ class ConfigR4:
         _, pino, invertido = hal.hal_token_pino(indices[0])
         if spec.papel == "pino":
             return pino
+        # "invertido" e "polaridade_par" leem a mesma coisa: o .not da 1ª linha
+        # (para o par home/limite, a 1ª linha é a do home).
         return invertido
 
     # ---- gravação ----
@@ -483,5 +489,9 @@ class ConfigR4:
         elif spec.papel == "pino":
             for i in indices:
                 hal.hal_definir_pino(i, pino=int(valor))
+        elif spec.papel == "polaridade_par":
+            # o .not troca de lado entre as duas linhas, nunca some nem duplica
+            hal.hal_definir_pino(indices[0], invertido=bool(valor))
+            hal.hal_definir_pino(indices[1], invertido=not bool(valor))
         else:  # invertido — só a primeira linha define a polaridade do recurso
             hal.hal_definir_pino(indices[0], invertido=bool(valor))

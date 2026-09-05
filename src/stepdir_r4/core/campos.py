@@ -60,6 +60,9 @@ class RecursoHal:
     direcao: str  # "entrada" | "saida"
     padroes: tuple[str, ...]
     com_invertido: bool = True  # expõe campo `.invertido` (troca o .not da 1ª linha)
+    # Recursos de duas linhas em polaridades opostas (home/limites): expõe
+    # `.polaridade_invertida`, que troca o `.not` de lado entre as duas.
+    com_polaridade_par: bool = False
 
 
 @dataclass(frozen=True)
@@ -77,7 +80,8 @@ class Campo:
     descricao: str = ""
     # campos INI: seções/chaves espelhadas (1 edição → escrita em todos os alvos)
     alvos: tuple[AlvoIni, ...] = ()
-    # papel especial: "sinal" | "abs" (visões do SCALE) | "habilitado" | "pino" | "invertido"
+    # papel especial: "sinal" | "abs" (visões do SCALE) | "habilitado" | "pino"
+    #                 | "invertido" | "polaridade_par"
     papel: str | None = None
     recurso: str | None = None  # id do RecursoHal, para campos io.*
 
@@ -107,6 +111,7 @@ RECURSOS: dict[str, RecursoHal] = {
             "entrada",
             (r"net\s+all-home\s", r"net\s+all-limit\s"),
             com_invertido=False,  # o par home/limite usa as duas polaridades do pino
+            com_polaridade_par=True,
         ),
         RecursoHal("probe_1", "entrada", (r"net\s+probe-in0-pre\s",)),
         RecursoHal("probe_2", "entrada", (r"net\s+probe-in1-pre\s",)),
@@ -292,6 +297,25 @@ def _campos_io() -> list[Campo]:
                                           "normal fechado (NF): acrescenta o "
                                           "sufixo .not ao pino, invertendo o "
                                           "sinal."))
+        if rec.com_polaridade_par:
+            campos.append(Campo(f"io.{rid}.polaridade_invertida",
+                                f"{rotulo} — sensor liga ao detectar",
+                                "io", classe, Tipo.BOOL,
+                                papel="polaridade_par", recurso=rid,
+                                descricao="Deixe DESMARCADO para o sensor "
+                                          "indutivo NPN normal aberto da Spark "
+                                          "V2 (entrada ligada em repouso, "
+                                          "desliga ao detectar) — é o que o "
+                                          "padrão de fábrica espera. Marque só "
+                                          "se o seu sensor faz o contrário "
+                                          "(PNP ou normal fechado: desligado "
+                                          "em repouso, liga ao detectar). "
+                                          "Marcado errado, o fim de curso fica "
+                                          "acionado com a máquina parada. O "
+                                          "mesmo pino serve ao home e ao fim "
+                                          "de curso em polaridades opostas, "
+                                          "então o .not troca de lado entre "
+                                          "as duas linhas."))
     return campos
 
 

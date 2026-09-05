@@ -25,13 +25,13 @@ Depends:
  pkexec | policykit-1,
  polkitd | policykit-1,
  iputils-ping,
- iputils-arping,
  iproute2,
  procps,
  xdg-user-dirs,
 Recommends:
  linuxcnc-uspace,
  polkit-1-auth-agent,
+ iputils-arping,
 Description: instalador e configurador da placa LinuxCNC StepDir R4
  Automatiza a instalação da placa controladora StepDir R4 (rede ethernet
  dedicada, drivers realtime com backup e pasta de configuração

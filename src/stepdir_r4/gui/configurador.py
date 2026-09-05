@@ -11,6 +11,7 @@ Proibido rodar como root (tech-stack §Privilégios).
 
 from __future__ import annotations
 
+import locale
 import os
 import sys
 from pathlib import Path
@@ -166,7 +167,8 @@ class JanelaConfigurador(Gtk.Window):
     def _ao_formatar_numero(self, spin: Gtk.SpinButton) -> bool:
         # exibe como o arquivo (250, não 250.000); True = não reformatar
         spin.set_text(logica.formatar_numero(
-            spin.get_adjustment().get_value(), spin.get_digits()
+            spin.get_adjustment().get_value(), spin.get_digits(),
+            logica.separador_decimal(),
         ))
         return True
 
@@ -280,6 +282,12 @@ class JanelaConfigurador(Gtk.Window):
 
 
 def main(pasta: str | None = None) -> int:
+    # locale do usuário para o separador decimal dos SpinButton (o GTK já
+    # a aplica no C; isto garante que locale.localeconv() veja o mesmo)
+    try:
+        locale.setlocale(locale.LC_ALL, "")
+    except locale.Error:
+        pass
     if os.geteuid() == 0:
         print(
             "Erro: não execute o configurador como root. Rode como usuário "
