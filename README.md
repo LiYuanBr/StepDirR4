@@ -31,6 +31,17 @@ A configuração que o instalador copia para `~/linuxcnc/configs/R4` já vem com
 
 `IN3`–`IN6` e `OUT1` ficam livres. Se a sua montagem for diferente, troque os pinos na aba **Entradas/Saídas** do configurador em vez de mexer no arquivo à mão.
 
+**Motores (Spark V2, conferido no Mach3 da máquina de referência)** — já é o padrão do template; o configurador mostra e edita em cada aba de eixo (`SCALE` = passos por mm, em Avançado):
+
+| Eixo | Passos por mm | Velocidade máx. | Aceleração |
+|---|---|---|---|
+| X | 320 (sentido invertido: `SCALE = -320`) | 9000 mm/min (150 mm/s) | 600 mm/s² |
+| Y | 320 | 9000 mm/min (150 mm/s) | 600 mm/s² |
+| Z | 640 | 4000 mm/min (67 mm/s) | 600 mm/s² |
+| A (rotativo) | 53,333 passos/grau | 12000 °/min (200 °/s) | 600 °/s² |
+
+Sintoma de `SCALE` errado: a máquina para "no meio" do curso com os três eixos exatamente nos limites de software (`relativo + G54` = `MAX_LIMIT`). Teste: `G91 G0 X100` no MDI e mede com trena — andou 50 mm, dobra o `SCALE`.
+
 **Sensores de home/fim de curso**: o padrão de fábrica é feito para o sensor indutivo **NPN normal aberto** da Spark V2 — a entrada fica ligada em repouso e desliga ao detectar. O `all-home` lê o pino cru (ativo em repouso) e o `all-limit` lê o `.not`: o LinuxCNC, ao referenciar, primeiro "sai" do home andando no sentido contrário a `HOME_SEARCH_VEL` até o sensor detectar, e depois acha a borda em baixa velocidade — é assim que o template funciona, não mexa. Só se o seu sensor for do tipo contrário (PNP ou normal fechado: desligado em repouso, liga ao detectar) marque **"Home e fins de curso — sensor liga ao detectar"** (aba Entradas/Saídas, expander *Avançado*). Marcada com o sensor errado, a opção deixa o **fim de curso acionado com a máquina parada** e o LinuxCNC recusa qualquer movimento ("limite atingido").
 
 Para conferir qual é o seu caso, com o LinuxCNC aberto e o sensor livre:
@@ -54,13 +65,13 @@ Na máquina do LinuxCNC:
 
 ```bash
 cd ~/Downloads
-sudo apt install ./stepdir-r4_0.1.2_amd64.deb
+sudo apt install ./stepdir-r4_0.1.3_amd64.deb
 ```
 
    **Máquina sem internet** (o caso comum: PC dedicado à CNC, só com o cabo da placa): use o `dpkg` em vez do `apt`, senão o `apt` tenta baixar pacotes e trava. Tudo de que o `.deb` depende já vem no ISO oficial do LinuxCNC — nada precisa ser baixado. Copie o `.deb` por pendrive e rode:
 
 ```bash
-sudo dpkg -i ./stepdir-r4_0.1.2_amd64.deb
+sudo dpkg -i ./stepdir-r4_0.1.3_amd64.deb
 ```
 
    (O único pacote opcional que o ISO não traz, `iputils-arping`, só serve para avisar se outro aparelho já usa o IP do PC no cabo da placa; sem ele o assistente segue normalmente.)
