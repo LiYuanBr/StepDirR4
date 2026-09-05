@@ -57,6 +57,14 @@ cd ~/Downloads
 sudo apt install ./stepdir-r4_0.1.2_amd64.deb
 ```
 
+   **Máquina sem internet** (o caso comum: PC dedicado à CNC, só com o cabo da placa): use o `dpkg` em vez do `apt`, senão o `apt` tenta baixar pacotes e trava. Tudo de que o `.deb` depende já vem no ISO oficial do LinuxCNC — nada precisa ser baixado. Copie o `.deb` por pendrive e rode:
+
+```bash
+sudo dpkg -i ./stepdir-r4_0.1.2_amd64.deb
+```
+
+   (O único pacote opcional que o ISO não traz, `iputils-arping`, só serve para avisar se outro aparelho já usa o IP do PC no cabo da placa; sem ele o assistente segue normalmente.)
+
 3. Abra **StepDir R4 — Setup** no menu de aplicativos (categoria **CNC**) e siga o assistente.
 
 O configurador de uso contínuo fica em **StepDir R4 — Config** (`stepdir-r4 configurar`). Todos os subcomandos da CLI abaixo funcionam trocando `PYTHONPATH=src python3 -m stepdir_r4` por `stepdir-r4`.
