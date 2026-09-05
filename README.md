@@ -65,13 +65,13 @@ Na máquina do LinuxCNC:
 
 ```bash
 cd ~/Downloads
-sudo apt install ./stepdir-r4_0.1.2_amd64.deb
+sudo apt install ./stepdir-r4_0.1.3_amd64.deb
 ```
 
    **Máquina sem internet** (o caso comum: PC dedicado à CNC, só com o cabo da placa): use o `dpkg` em vez do `apt`, senão o `apt` tenta baixar pacotes e trava. Tudo de que o `.deb` depende já vem no ISO oficial do LinuxCNC — nada precisa ser baixado. Copie o `.deb` por pendrive e rode:
 
 ```bash
-sudo dpkg -i ./stepdir-r4_0.1.2_amd64.deb
+sudo dpkg -i ./stepdir-r4_0.1.3_amd64.deb
 ```
 
    (O único pacote opcional que o ISO não traz, `iputils-arping`, só serve para avisar se outro aparelho já usa o IP do PC no cabo da placa; sem ele o assistente segue normalmente.)
