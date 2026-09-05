@@ -41,7 +41,7 @@ addf    debounce.limit.axis			servo-thread
 setp    debounce.emergencia.delay		2
 setp    debounce.home.axis.delay		2
 setp    debounce.lim.delay				2
-setp    debounce.probe.delay			2
+setp    debounce.probe.delay			20
 setp    debounce.cycle_start.delay		2
 setp    debounce.cycle_stop.delay		2
 setp    debounce.limit.axis.delay		2
